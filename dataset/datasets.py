@@ -43,12 +43,13 @@ class Kitti(Dataset):
 
     def __init__(self, data_root, split, pts_prefix='velodyne_reduced'):
         assert split in ['train', 'val', 'trainval', 'test']
+        self.dataset_name = 'kitti'
         self.data_root = data_root
         self.split = split
         self.pts_prefix = pts_prefix
-        self.data_infos = read_pickle(os.path.join(data_root, f'kitti_infos_{split}.pkl'))
+        self.data_infos = read_pickle(os.path.join(data_root, f'{self.dataset_name}_infos_{split}.pkl'))
         self.sorted_ids = list(self.data_infos.keys())
-        db_infos = read_pickle(os.path.join(data_root, 'kitti_dbinfos_train.pkl'))
+        db_infos = read_pickle(os.path.join(data_root, f'{self.dataset_name}_dbinfos_train.pkl'))
         db_infos = self.filter_db(db_infos)
 
         db_sampler = {}
@@ -136,6 +137,48 @@ class Kitti(Dataset):
     def __len__(self):
         return len(self.data_infos)
  
+
+class Custom(Dataset):
+    CLASSES = {
+        'Pedestrian': 0,
+        'Cyclist': 1,
+        'Car': 2,
+        'Wheelchiar': 3
+    }
+
+    def __init__(self, data_root, split, pts_prefix='velodyne'):
+        assert split in ['train', 'val', 'trainval', 'test']
+        self.dataset_name = 'custom'
+        self.data_root = data_root
+        self.split = split
+        self.pts_prefix = pts_prefix
+        self.data_infos = read_pickle(os.path.join(data_root, f'{self.dataset_name}_infos_{split}.pkl'))
+        self.sorted_ids = list(self.data_infos.keys())
+        db_infos = read_pickle(os.path.join(data_root, f'{self.dataset_name}_dbinfos_train.pkl'))
+        #db_infos = self.filter_db(db_infos)
+
+        db_sampler = {}
+        for cat_name in self.CLASSES:
+            db_sampler[cat_name] = BaseSampler(db_infos[cat_name], shuffle=True)
+        self.data_aug_config = dict(
+            db_sampler=dict(
+                db_sampler=db_sampler,
+                sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10)
+            ),
+            object_noise=dict(
+                num_try=100,
+                translation_std=[0.25, 0.25, 0.25],
+                rot_range=[-0.15707963267, 0.15707963267]
+            ),
+            random_flip_ratio=0.5,
+            global_rot_scale_trans=dict(
+                rot_range=[-0.78539816, 0.78539816],
+                scale_ratio_range=[0.95, 1.05],
+                translation_std=[0, 0, 0]
+            ),
+            point_range_filter=[0, -39.68, -3, 69.12, 39.68, 1],
+            object_range_filter=[0, -39.68, -3, 69.12, 39.68, 1]
+        )
 
 if __name__ == '__main__':
     

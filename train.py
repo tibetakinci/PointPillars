@@ -1,11 +1,12 @@
 import argparse
 import os
 import torch
+from torch.utils.data import Dataset
 from tqdm import tqdm
 import pdb
 
 from utils import setup_seed
-from dataset import Kitti, get_dataloader
+from dataset import Kitti, get_dataloader, Custom
 from model import PointPillars
 from loss import Loss
 from torch.utils.tensorboard import SummaryWriter
@@ -22,16 +23,25 @@ def save_summary(writer, loss_dict, global_step, tag, lr=None, momentum=None):
 
 def main(args):
     setup_seed()
-    train_dataset = Kitti(data_root=args.data_root,
-                          split='train')
-    val_dataset = Kitti(data_root=args.data_root,
-                        split='val')
-    train_dataloader = get_dataloader(dataset=train_dataset, 
-                                      batch_size=args.batch_size, 
+    train_dataset = Dataset
+    val_dataset = Dataset
+    if args.dataset_name == 'kitti':
+        train_dataset = Kitti(data_root=args.data_root,
+                              split='train')
+        val_dataset = Kitti(data_root=args.data_root,
+                            split='val')
+    elif args.dataset_name == 'custom':
+        train_dataset = Custom(data_root=args.data_root,
+                               split='train')
+        val_dataset = Custom(data_root=args.data_root,
+                             split='val')
+
+    train_dataloader = get_dataloader(dataset=train_dataset,
+                                      batch_size=args.batch_size,
                                       num_workers=args.num_workers,
                                       shuffle=True)
-    val_dataloader = get_dataloader(dataset=val_dataset, 
-                                    batch_size=args.batch_size, 
+    val_dataloader = get_dataloader(dataset=val_dataset,
+                                    batch_size=args.batch_size,
                                     num_workers=args.num_workers,
                                     shuffle=False)
 
@@ -43,17 +53,17 @@ def main(args):
 
     max_iters = len(train_dataloader) * args.max_epoch
     init_lr = args.init_lr
-    optimizer = torch.optim.AdamW(params=pointpillars.parameters(), 
-                                  lr=init_lr, 
+    optimizer = torch.optim.AdamW(params=pointpillars.parameters(),
+                                  lr=init_lr,
                                   betas=(0.95, 0.99),
                                   weight_decay=0.01)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,  
-                                                    max_lr=init_lr*10, 
-                                                    total_steps=max_iters, 
-                                                    pct_start=0.4, 
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+                                                    max_lr=init_lr * 10,
+                                                    total_steps=max_iters,
+                                                    pct_start=0.4,
                                                     anneal_strategy='cos',
-                                                    cycle_momentum=True, 
-                                                    base_momentum=0.95*0.895, 
+                                                    cycle_momentum=True,
+                                                    base_momentum=0.95 * 0.895,
                                                     max_momentum=0.95,
                                                     div_factor=10)
     saved_logs_path = os.path.join(args.saved_path, 'summary')
@@ -72,7 +82,7 @@ def main(args):
                     for j, item in enumerate(data_dict[key]):
                         if torch.is_tensor(item):
                             data_dict[key][j] = data_dict[key][j].cuda()
-            
+
             optimizer.zero_grad()
 
             batched_pts = data_dict['batched_pts']
@@ -80,11 +90,11 @@ def main(args):
             batched_labels = data_dict['batched_labels']
             batched_difficulty = data_dict['batched_difficulty']
             bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict = \
-                pointpillars(batched_pts=batched_pts, 
+                pointpillars(batched_pts=batched_pts,
                              mode='train',
-                             batched_gt_bboxes=batched_gt_bboxes, 
+                             batched_gt_bboxes=batched_gt_bboxes,
                              batched_gt_labels=batched_labels)
-            
+
             bbox_cls_pred = bbox_cls_pred.permute(0, 2, 3, 1).reshape(-1, args.nclasses)
             bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 7)
             bbox_dir_cls_pred = bbox_dir_cls_pred.permute(0, 2, 3, 1).reshape(-1, 2)
@@ -95,7 +105,7 @@ def main(args):
             # batched_bbox_reg_weights = anchor_target_dict['batched_bbox_reg_weights'].reshape(-1)
             batched_dir_labels = anchor_target_dict['batched_dir_labels'].reshape(-1)
             # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
-            
+
             pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
             bbox_pred = bbox_pred[pos_idx]
             batched_bbox_reg = batched_bbox_reg[pos_idx]
@@ -113,11 +123,11 @@ def main(args):
             loss_dict = loss_func(bbox_cls_pred=bbox_cls_pred,
                                   bbox_pred=bbox_pred,
                                   bbox_dir_cls_pred=bbox_dir_cls_pred,
-                                  batched_labels=batched_bbox_labels, 
-                                  num_cls_pos=num_cls_pos, 
-                                  batched_bbox_reg=batched_bbox_reg, 
+                                  batched_labels=batched_bbox_labels,
+                                  num_cls_pos=num_cls_pos,
+                                  batched_bbox_reg=batched_bbox_reg,
                                   batched_dir_labels=batched_dir_labels)
-            
+
             loss = loss_dict['total_loss']
             loss.backward()
             # torch.nn.utils.clip_grad_norm_(pointpillars.parameters(), max_norm=35)
@@ -128,11 +138,11 @@ def main(args):
 
             if global_step % args.log_freq == 0:
                 save_summary(writer, loss_dict, global_step, 'train',
-                             lr=optimizer.param_groups[0]['lr'], 
+                             lr=optimizer.param_groups[0]['lr'],
                              momentum=optimizer.param_groups[0]['betas'][0])
             train_step += 1
         if (epoch + 1) % args.ckpt_freq_epoch == 0:
-            torch.save(pointpillars.state_dict(), os.path.join(saved_ckpt_path, f'epoch_{epoch+1}.pth'))
+            torch.save(pointpillars.state_dict(), os.path.join(saved_ckpt_path, f'epoch_{epoch + 1}.pth'))
 
         if epoch % 2 == 0:
             continue
@@ -145,17 +155,17 @@ def main(args):
                         for j, item in enumerate(data_dict[key]):
                             if torch.is_tensor(item):
                                 data_dict[key][j] = data_dict[key][j].cuda()
-                
+
                 batched_pts = data_dict['batched_pts']
                 batched_gt_bboxes = data_dict['batched_gt_bboxes']
                 batched_labels = data_dict['batched_labels']
                 batched_difficulty = data_dict['batched_difficulty']
                 bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict = \
-                    pointpillars(batched_pts=batched_pts, 
-                                mode='train',
-                                batched_gt_bboxes=batched_gt_bboxes, 
-                                batched_gt_labels=batched_labels)
-                
+                    pointpillars(batched_pts=batched_pts,
+                                 mode='train',
+                                 batched_gt_bboxes=batched_gt_bboxes,
+                                 batched_gt_labels=batched_labels)
+
                 bbox_cls_pred = bbox_cls_pred.permute(0, 2, 3, 1).reshape(-1, args.nclasses)
                 bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 7)
                 bbox_dir_cls_pred = bbox_dir_cls_pred.permute(0, 2, 3, 1).reshape(-1, 2)
@@ -166,7 +176,7 @@ def main(args):
                 # batched_bbox_reg_weights = anchor_target_dict['batched_bbox_reg_weights'].reshape(-1)
                 batched_dir_labels = anchor_target_dict['batched_dir_labels'].reshape(-1)
                 # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
-                
+
                 pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
                 bbox_pred = bbox_pred[pos_idx]
                 batched_bbox_reg = batched_bbox_reg[pos_idx]
@@ -182,13 +192,13 @@ def main(args):
                 batched_bbox_labels = batched_bbox_labels[batched_label_weights > 0]
 
                 loss_dict = loss_func(bbox_cls_pred=bbox_cls_pred,
-                                    bbox_pred=bbox_pred,
-                                    bbox_dir_cls_pred=bbox_dir_cls_pred,
-                                    batched_labels=batched_bbox_labels, 
-                                    num_cls_pos=num_cls_pos, 
-                                    batched_bbox_reg=batched_bbox_reg, 
-                                    batched_dir_labels=batched_dir_labels)
-                
+                                      bbox_pred=bbox_pred,
+                                      bbox_dir_cls_pred=bbox_dir_cls_pred,
+                                      batched_labels=batched_bbox_labels,
+                                      num_cls_pos=num_cls_pos,
+                                      batched_bbox_reg=batched_bbox_reg,
+                                      batched_dir_labels=batched_dir_labels)
+
                 global_step = epoch * len(val_dataloader) + val_step + 1
                 if global_step % args.log_freq == 0:
                     save_summary(writer, loss_dict, global_step, 'val')
@@ -198,8 +208,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configuration Parameters')
-    parser.add_argument('--data_root', default='/mnt/ssd1/lifa_rdata/det/kitti', 
-                        help='your data root for kitti')
+    parser.add_argument('--data_root', default='/mnt/ssd1/lifa_rdata/det/kitti',
+                        help='your data root for your dataset')
+    parser.add_argument('--dataset_name', default='kitti',
+                        help='your dataset name')
     parser.add_argument('--saved_path', default='pillar_logs')
     parser.add_argument('--batch_size', type=int, default=6)
     parser.add_argument('--num_workers', type=int, default=4)
