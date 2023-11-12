@@ -23,8 +23,7 @@ def save_summary(writer, loss_dict, global_step, tag, lr=None, momentum=None):
 
 def main(args):
     setup_seed()
-    train_dataset = Dataset
-    val_dataset = Dataset
+    train_dataset, val_dataset = Dataset
     if args.dataset_name == 'kitti':
         train_dataset = Kitti(data_root=args.data_root,
                               split='train')
