@@ -44,13 +44,13 @@ def read_csv(csv_root, csv_dir):
 def convert_bag2bin(msg, output_root, id):
     pc = point_cloud2.read_points_list(msg, field_names=['x', 'y', 'z', 'intensity'], skip_nans=True)
     pc = np.array(pc, dtype=np.float32)
-    out_filename = '{:0>6}.bin'.format(id)
+    out_filename = '{:0>6}.bin'.format(str(id))
     output_file_name = '{0}/{1}'.format(output_root, out_filename)
     write_points(pc, output_file_name)
 
 
 def convert_csv2txt(row, output_root, id):
-    out_filename = '{:0>6}.txt'.format(id)
+    out_filename = '{:0>6}.txt'.format(str(id))
     output_file_name = '{0}/{1}'.format(output_root, out_filename)
     result = {
         'name': [],
