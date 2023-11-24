@@ -89,13 +89,17 @@ def convert_dataset(bag_root, csv_root, pc_output_root, label_output_root, start
     csv_files = filter_files(os.listdir(csv_root), '.csv')
     bag_files = filter_files(os.listdir(bag_root), '.bag')
     assert len(csv_files) == len(bag_files)
+    print(csv_files)
+    print(bag_files)
 
     for file_id in range(len(csv_files)):
         assert os.path.splitext(csv_files[file_id])[0] == os.path.splitext(bag_files[file_id])[0]
-        msgs = read_bag(bag_root, bag_files[file_id], '')
+        msgs = read_bag(bag_root, bag_files[file_id])
         rows = read_csv(csv_root, csv_files[file_id])
         for row in rows:
+            print(f"Converting {csv_files[file_id]} to .bin file")
             convert_bag2bin(msgs[row], pc_output_root, start_id)
+            print(f"Converting {bag_files[file_id]} to .txt file")
             convert_csv2txt(rows[row], label_output_root, start_id)
             start_id += 1
 
