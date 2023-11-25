@@ -63,9 +63,11 @@ writetimetable(tt, 'your_csv_file_name.csv')
 ```
 After exporting .csv file, please run the script with correct arguments.
 ```
-python convert_dataset.py --bag_data_root your_rosbag_data_root --csv_data_root your_csv_data_root --pc_output_root your_point_cloud_root --label_output_root your_label_data_root
+python convert_dataset.py --bag_data_root your_rosbag_data_root --csv_data_root your_csv_data_root --pc_output_root your_point_cloud_root --label_output_root your_label_data_root --start_id starting_index
 ```
-> Note: *--pc_output_root* and *--label_output_root* parameters are not required. If not specified, the script will create a new folder at parent directory as *velodyne* and *label_2* respectively.
+> Note: *pc_output_root* and *label_output_root* arguments are not required. If not specified, the script will create a new folder at parent directory as *velodyne* and *label_2* respectively.
+
+> Note: *start_id* argument is not required. It is in integer type. It is implemented as starting index for output files. Default value is 0
 
 #### Prepare dataset
 Please run the below code to pickle dataset objects for more efficient utilization by the model.
