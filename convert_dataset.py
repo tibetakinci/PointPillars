@@ -62,11 +62,13 @@ def convert_csv2txt(row, output_root, id):
         'location': [],
         'rotation_y': []
     }
+    print(row[1:3])
+    print(row[4:6])
     result['name'].append('Wheelchair')
     result['truncated'].append('0.00')
     result['occluded'].append('3')
-    result['bbox'].append(' '.join(['0.00' * 4]))
     result['alpha'].append('-10')
+    result['bbox'].append(''.join(['0.00' * 4]))
     result['dimensions'].append(row[4:6])
     result['location'].append(row[1:3])
     result['rotation_y'].append(row[9])

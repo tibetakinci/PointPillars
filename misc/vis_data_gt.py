@@ -18,10 +18,6 @@ def vis_gt(root, id, saved_root):
     lidar_path = os.path.join(root, 'velodyne', f'{id}.bin')
     calib_path = os.path.join(root, 'calib', f'{id}.txt') 
     label_path = os.path.join(root, 'label_2', f'{id}.txt')
-    print(img_path)
-    print(lidar_path)
-    print(calib_path)
-    print(label_path)
 
     img = cv2.imread(img_path)
     img3d = copy.deepcopy(img)
