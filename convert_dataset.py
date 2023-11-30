@@ -102,10 +102,9 @@ def convert_dataset(bag_root, csv_root, pc_output_root, label_output_root, start
         assert os.path.splitext(csv_files[file_id])[0] == os.path.splitext(bag_files[file_id])[0]
         msgs = read_bag(bag_root, bag_files[file_id])
         rows = read_csv(csv_root, csv_files[file_id])
+        print(f"Converting {bag_files[file_id]} and {csv_files[file_id]}")
         for row in rows:
-            print(f"Converting {row}. frame from {bag_files[file_id]}")
             convert_bag2bin(msgs[row], pc_output_root, start_id)
-            print(f"Converting {row}. frame from {csv_files[file_id]}")
             convert_csv2txt(rows[row], label_output_root, start_id)
             start_id += 1
 
