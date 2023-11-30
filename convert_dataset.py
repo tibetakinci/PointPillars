@@ -69,8 +69,8 @@ def convert_csv2txt(row, output_root, id):
     result['occluded'].append('3')
     result['alpha'].append('-10')
     result['bbox'].append(''.join(['0.00' * 4]))
-    result['dimensions'].append(row[4:6])
-    result['location'].append(row[1:3])
+    result['dimensions'].append(row[4:7])
+    result['location'].append(row[1:4])
     result['rotation_y'].append(row[9])
 
     write_label_no_score(result, output_file_name)
