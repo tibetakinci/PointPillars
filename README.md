@@ -58,7 +58,7 @@ This script is utilized to convert point cloud raw data from rosbag to .bin file
 Before running [convert_dataset.py](convert_dataset.py), please export labeled data from Lidar Labeler app in MATLAB as .csv file by running below code box in MATLAB.
 ```
 load('your_mat_file.mat')
-tt = gTruth.LabeledData
+tt = gTruth.LabelData
 writetimetable(tt, 'your_csv_file_name.csv')
 ```
 After exporting .csv file, please run the script with correct arguments.
