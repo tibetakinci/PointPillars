@@ -11,7 +11,7 @@ from utils import write_points, write_label_no_score
 def truncate(rows):
     result = []
     for row in rows:
-        if row.find('.') is not -1:
+        if row.find('.') != -1:
             index = row.find('.') + 3
             result.append(row[:index])
         else:
