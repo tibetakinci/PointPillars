@@ -8,6 +8,14 @@ import os
 from utils import write_points, write_label_no_score
 
 
+def truncate(rows):
+    result = []
+    for row in rows:
+        index = row.index('.') + 2
+        result.append(row[:index])
+
+    return result
+
 def filter_files(files, suffix):
     result = []
     for file in files:
@@ -62,15 +70,13 @@ def convert_csv2txt(row, output_root, id):
         'location': [],
         'rotation_y': []
     }
-    print(type(row[9]))
-    print("%.2f" % row[9])
     result['name'].append('Wheelchair')
     result['truncated'].append('0.00')
     result['occluded'].append('3')
     result['alpha'].append('-10')
     result['bbox'].append(np.array(['0.00' for _ in range(4)]))
-    result['dimensions'].append(row[4:7])
-    result['location'].append(row[1:4])
+    result['dimensions'].append(truncate(row[4:7]))
+    result['location'].append(truncate(row[1:4]))
     result['rotation_y'].append(row[9])
 
     write_label_no_score(result, output_file_name)
