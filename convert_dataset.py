@@ -62,6 +62,8 @@ def convert_csv2txt(row, output_root, id):
         'location': [],
         'rotation_y': []
     }
+    print(type(row[9]))
+    print("%.2f" % row[9])
     result['name'].append('Wheelchair')
     result['truncated'].append('0.00')
     result['occluded'].append('3')
