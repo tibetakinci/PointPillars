@@ -80,7 +80,7 @@ def convert_csv2txt(row, output_root, id):
     result['bbox'].append(np.array(['0.00' for _ in range(4)]))
     result['dimensions'].append(truncate(row[4:7]))
     result['location'].append(truncate(row[1:4]))
-    result['rotation_y'].append(truncate(row[9]))
+    result['rotation_y'].append(truncate(np.array(row[9])))
 
     write_label_no_score(result, output_file_name)
 
