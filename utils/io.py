@@ -124,5 +124,5 @@ def write_label_no_score(result, file_path, suffix='.txt'):
             bbox_str = ' '.join(map(str, bbox[i]))
             hwl = ' '.join(map(str, dimensions[i]))
             xyz = ' '.join(map(str, location[i]))
-            line = f'{name[i]} {truncated[i]} {occluded[i]} {alpha[i]} {bbox_str} {hwl} {xyz} {rotation_y[i]}\n'
+            line = f'{name[i]} {truncated[i]} {occluded[i]} {alpha[i]} {bbox_str} {hwl} {xyz} {rotation_y[i][0]}\n'
             f.writelines(line)
