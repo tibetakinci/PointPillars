@@ -15,7 +15,7 @@ def truncate(rows):
             index = row.find('.') + 3
             result.append(row[:index])
         else:
-            result.append(row.join('.00'))
+            result.append(row + '.00')
 
     return result
 
