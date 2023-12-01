@@ -98,7 +98,7 @@ def vis_pc(pc, bboxes=None, labels=None):
         vis_objs.append(bbox_obj(bbox, color=color))
 
     print(len(vis_objs))
-    o3d.visualization.draw_plotly([vis_objs])
+    o3d.visualization.draw_plotly([vis_objs[0]])
 
     #vis_core(vis_objs)
 
