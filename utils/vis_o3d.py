@@ -99,6 +99,7 @@ def vis_pc(pc, bboxes=None, labels=None):
 
     print(len(vis_objs))
     print(vis_objs)
+    print(type(vis_objs[0]))
     o3d.visualization.draw_plotly([vis_objs[0]])
     #o3d.visualization.draw_geometries([vis_objs[1]])
 
