@@ -100,7 +100,7 @@ def vis_pc(pc, bboxes=None, labels=None):
     print(type(vis_objs))
     print(len(vis_objs))
     print(vis_objs)
-    o3d.visualization.draw_plotly(vis_objs)
+    o3d.visualization.draw_plotly(vis_objs['PointCloud'])
 
     #vis_core(vis_objs)
 
