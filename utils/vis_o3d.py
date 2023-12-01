@@ -100,7 +100,7 @@ def vis_pc(pc, bboxes=None, labels=None):
     print(len(vis_objs))
     print(vis_objs)
     o3d.visualization.draw_plotly([vis_objs[0]])
-    o3d.visualization.draw_geometries([vis_objs[1]])
+    #o3d.visualization.draw_geometries([vis_objs[1]])
 
     #vis_core(vis_objs)
 
