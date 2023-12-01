@@ -77,10 +77,12 @@ def vis_pc(pc, bboxes=None, labels=None):
     size=10, origin=[0, 0, 0])
 
     if bboxes is None:
+        print("BBOXES NONE")
         vis_core([pc, mesh_frame])
         return
     
     if len(bboxes.shape) == 2:
+        print("BBOXES.SHAPE == 2")
         bboxes = bbox3d2corners(bboxes)
     
     vis_objs = [pc, mesh_frame]
@@ -94,7 +96,7 @@ def vis_pc(pc, bboxes=None, labels=None):
             else:
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
-    o3d.visualization.draw_plotly(vis_objs)
+    o3d.visualization.draw_plotly([vis_objs])
 
     #vis_core(vis_objs)
 
