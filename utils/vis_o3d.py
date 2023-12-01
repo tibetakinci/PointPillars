@@ -94,7 +94,9 @@ def vis_pc(pc, bboxes=None, labels=None):
             else:
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
-    vis_core(vis_objs)
+    o3d.visualization.draw_plotly(vis_objs)
+
+    #vis_core(vis_objs)
 
 
 def vis_img_3d(img, image_points, labels, rt=True):

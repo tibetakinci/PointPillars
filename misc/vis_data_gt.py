@@ -36,7 +36,8 @@ def vis_gt(root, id, saved_root):
             }
 
 
-    ## 1. visualize 2d 
+    ## 1. visualize 2d
+    '''
     for i, bbox in enumerate(bboxes):
         x1, y1, x2, y2 = bbox
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
@@ -44,6 +45,7 @@ def vis_gt(root, id, saved_root):
     cv2.imwrite(os.path.join(saved_root, f'{id}-2d.png'), img)
     cv2.imshow(f'{id}-2d bbox', img)
     cv2.waitKey(0)
+    '''
 
     ## 2. visualize 3d bbox in point cloud
 
@@ -63,12 +65,14 @@ def vis_gt(root, id, saved_root):
     vis_pc(lidar_points, lidar_bboxes_points, labels) # (N, 8, 2)
 
     ## 3. visualize 3d bbox in image
+    '''
     P2 = calib_dict['P2']
     image_points = points_lidar2image(lidar_bboxes_points, tr_velo_to_cam, r0_rect, P2)
     img3d = vis_img_3d(img3d, image_points, labels)
     cv2.imwrite(os.path.join(saved_root, f'{id}-3d.png'), img3d)
     cv2.imshow(f'{id}-3d bbox', img3d)
     cv2.waitKey(0)
+    '''
 
 
 if __name__ == '__main__':
