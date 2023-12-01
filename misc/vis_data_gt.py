@@ -16,12 +16,14 @@ from utils import read_points, read_calib, read_label, bbox_camera2lidar, vis_pc
 def vis_gt(root, id, saved_root): 
     img_path = os.path.join(root, 'image_2', f'{id}.png')
     lidar_path = os.path.join(root, 'velodyne', f'{id}.bin')
+    reduced_lidar_path = os.path.join(root, 'velodyne_reduced', f'{id}.bin')
     calib_path = os.path.join(root, 'calib', f'{id}.txt') 
     label_path = os.path.join(root, 'label_2', f'{id}.txt')
 
     img = cv2.imread(img_path)
     img3d = copy.deepcopy(img)
     lidar_points = read_points(lidar_path)
+    reduced_lidar_points = read_points(reduced_lidar_path)
     calib_dict = read_calib(calib_path)
     annotation_dict = read_label(label_path)
 
