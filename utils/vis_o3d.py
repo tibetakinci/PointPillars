@@ -96,12 +96,16 @@ def vis_pc(pc, bboxes=None, labels=None):
             else:
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
+    
+    for ply in vis_objs:
+        print(type(ply))
 
-    print(len(vis_objs))
-    print(vis_objs)
-    print(type(vis_objs[0]))
-    o3d.visualization.draw_plotly([vis_objs[0]])
-    #o3d.visualization.draw_geometries([vis_objs[1]])
+    ###For KITTI dataset
+    #lookat = [0, -0.4, -0.3]  # look_at target - center
+    #front = [-0.000001, 0, 0]  # camera position - eye
+    #up = [0, 0, 1]  # camera orientation - up
+
+    o3d.visualization.draw_plotly([ply for ply in vis_objs]) #, lookat=lookat, up=up, front=front
 
     #vis_core(vis_objs)
 
