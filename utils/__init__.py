@@ -1,5 +1,5 @@
 from .io import read_pickle, write_pickle, read_points, write_points, read_calib, \
-    read_label, write_label, write_label_no_score
+    read_label, write_label, write_label_no_score, write_label_filtered
 from .process import bbox_camera2lidar, bbox3d2bevcorners, box_collision_test, \
     remove_pts_in_bboxes, limit_period, bbox3d2corners, points_lidar2image, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, \

@@ -97,8 +97,8 @@ def convert_dataset(bag_root, csv_root, pc_output_root, label_output_root, start
 
     os.makedirs(pc_output_root, exist_ok=True)
     os.makedirs(label_output_root, exist_ok=True)
-    csv_files = filter_files(os.listdir(csv_root), '.csv')
-    bag_files = filter_files(os.listdir(bag_root), '.bag')
+    csv_files = sorted(filter_files(os.listdir(csv_root), '.csv'))
+    bag_files = sorted(filter_files(os.listdir(bag_root), '.bag'))
     assert len(csv_files) == len(bag_files)
 
     for file_id in range(len(csv_files)):

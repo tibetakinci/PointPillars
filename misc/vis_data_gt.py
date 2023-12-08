@@ -14,17 +14,15 @@ from utils import read_points, read_calib, read_label, bbox_camera2lidar, vis_pc
 
 
 def vis_gt(root, id, saved_root): 
-    img_path = os.path.join(root, 'image_2', f'{id}.png')
+    #img_path = os.path.join(root, 'image_2', f'{id}.png')
     lidar_path = os.path.join(root, 'velodyne', f'{id}.bin')
-    #reduced_lidar_path = os.path.join(root, 'velodyne_reduced', f'{id}.bin')
     calib_path = os.path.join(root, 'calib', f'{id}.txt') 
     label_path = os.path.join(root, 'label_2', f'{id}.txt')
 
-    img = cv2.imread(img_path)
-    img3d = copy.deepcopy(img)
+    #img = cv2.imread(img_path)
+    #img3d = copy.deepcopy(img)
     lidar_points = read_points(lidar_path)
-    #reduced_lidar_points = read_points(reduced_lidar_path)
-    calib_dict = read_calib(calib_path)
+    #calib_dict = read_calib(calib_path)
     annotation_dict = read_label(label_path)
 
     bboxes = annotation_dict['bbox']
@@ -52,17 +50,32 @@ def vis_gt(root, id, saved_root):
     ## 2. visualize 3d bbox in point cloud
 
     # 2.1 camera coordinates
+    pi = 180
     dimensions = annotation_dict['dimensions']
     location = annotation_dict['location']
     rotation_y = annotation_dict['rotation_y']
     names = annotation_dict['name']
+    '''
+    print("rot-y")
+    print(rotation_y)
+    if rotation_y < (2*pi) and rotation_y > pi:  # 360 < rot < 180
+        rotation_y = rotation_y - (2*pi)
+    else:
+        rotation_y = rotation_y % pi
+    print("after-rot-y")
+    print(rotation_y)
+    '''
 
     # 2.2 lidar coordinates
-    bboxes_camera = np.concatenate([location, dimensions, rotation_y[:, None]], axis=-1) # (N, 7)
-    tr_velo_to_cam = calib_dict['Tr_velo_to_cam']
-    r0_rect = calib_dict['R0_rect']
-    bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
-    lidar_bboxes_points = bbox3d2corners(bboxes_lidar) # (N, 8, 3)
+    bboxes_camera = np.concatenate([location, dimensions[:, [1, 2, 0]], rotation_y[:, None]], axis=-1) # (N, 7)
+    print("camera")
+    print(bboxes_camera[0])
+    #tr_velo_to_cam = calib_dict['Tr_velo_to_cam']
+    #r0_rect = calib_dict['R0_rect']
+    #bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
+    #print("lidar")
+    #print(bboxes_lidar[0])
+    lidar_bboxes_points = bbox3d2corners(bboxes_camera) # (N, 8, 3)
     labels = [CLASSES.get(name, -1) for name in names]
     vis_pc(lidar_points, lidar_bboxes_points, labels) # (N, 8, 2)
 

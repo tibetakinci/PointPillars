@@ -74,7 +74,7 @@ def vis_pc(pc, bboxes=None, labels=None):
         pc = npy2ply(pc)
     
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-    size=10, origin=[0, 0, 0])
+    size=50, origin=[0, 0, 00])
 
     if bboxes is None:
         print("BBOXES NONE")
@@ -96,9 +96,6 @@ def vis_pc(pc, bboxes=None, labels=None):
             else:
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
-    
-    for ply in vis_objs:
-        print(type(ply))
 
     ###For KITTI dataset
     #lookat = [0, -0.4, -0.3]  # look_at target - center

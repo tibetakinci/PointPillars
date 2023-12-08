@@ -34,6 +34,8 @@ def main(args):
                                split='train')
         val_dataset = Custom(data_root=args.data_root,
                              split='val')
+    else:
+        raise ValueError("Dataset name should be 'kitti' or 'custom'")
 
     train_dataloader = get_dataloader(dataset=train_dataset,
                                       batch_size=args.batch_size,
