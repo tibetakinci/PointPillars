@@ -36,7 +36,7 @@ def judge_difficulty(annotation_dict):
 def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=False):
     sep = os.path.sep
     print(f"Processing {data_type} data..")
-    ids_file = os.path.join(CUR, 'dataset', 'ImageSets', f'{data_type}.txt')
+    ids_file = os.path.join(CUR, 'dataset', 'ImageSets', f'{data_type}.txt')   #TODO: Adjust ids for train, val, test, trainval
     with open(ids_file, 'r') as f:
         ids = [id.strip() for id in f.readlines()]
 
@@ -54,7 +54,7 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
         calib_path = os.path.join(data_root, split, 'calib', f'{id}.txt')
         cur_info_dict['velodyne_path'] = sep.join(lidar_path.split(sep)[-3:])
 
-        img = cv2.imread(img_path)
+        img = cv2.imread(img_path)                                              #TODO: Remove image related lines
         image_shape = img.shape[:2]
         cur_info_dict['image'] = {
             'image_shape': image_shape,
@@ -62,11 +62,11 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
             'image_idx': int(id),
         }
 
-        calib_dict = read_calib(calib_path)
+        calib_dict = read_calib(calib_path)                                     #TODO: Remove calib related lines
         cur_info_dict['calib'] = calib_dict
 
         lidar_points = read_points(lidar_path)
-        reduced_lidar_points = remove_outside_points(
+        reduced_lidar_points = remove_outside_points(                           #TODO: ??Remove reduced_lidar??
             points=lidar_points,
             r0_rect=calib_dict['R0_rect'],
             tr_velo_to_cam=calib_dict['Tr_velo_to_cam'],
@@ -79,9 +79,9 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
 
         if label:
             label_path = os.path.join(data_root, split, 'label_2', f'{id}.txt')
-            annotation_dict = read_label(label_path)
-            annotation_dict['difficulty'] = judge_difficulty(annotation_dict)
-            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox(
+            annotation_dict = read_label(label_path)                                #TODO: read_label_lidar implementation
+            annotation_dict['difficulty'] = judge_difficulty(annotation_dict)       #TODO: Remove difficulty
+            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox(           #TODO: Adjust method get_points_num_in_bbox without calib params
                 points=reduced_lidar_points,
                 r0_rect=calib_dict['R0_rect'],
                 tr_velo_to_cam=calib_dict['Tr_velo_to_cam'],
