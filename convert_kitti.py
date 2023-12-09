@@ -27,7 +27,7 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
         'location': [],
         'rotation_y': []
     }
-    result['name'].append(names)
+    result['name'].append(names.tolist())
     result['dimensions'].append(bboxes_lidar[:, 3:6])
     result['location'].append(bboxes_lidar[:, 0:3])
     result['rotation_y'].append(bboxes_lidar[:, 6])
