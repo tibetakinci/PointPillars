@@ -141,5 +141,5 @@ def write_label_filtered(result, file_path, suffix='.txt'):
         for i in range(len(name)):
             hwl = ' '.join(map(str, dimensions[i]))
             xyz = ' '.join(map(str, location[i]))
-            line = f'{name[i]} {hwl} {xyz} {rotation_y[i][0]}\n'
+            line = f'{name[i][i]} {hwl[i]} {xyz[i]} {rotation_y[i][i]}\n'
             f.writelines(line)
