@@ -135,7 +135,7 @@ def write_label_filtered(result, file_path, suffix='.txt'):
     '''
     assert os.path.splitext(file_path)[1] == suffix
     name, dimensions, location, rotation_y = \
-        result['name'][0], result['dimensions'][0], result['location'][0], result['rotation_y'][0]
+        result['name'], result['dimensions'], result['location'], result['rotation_y']
     print('name')
     print(name)
     print('dims')

@@ -6,6 +6,7 @@ import numpy as np
 import os
 
 from utils import write_points, write_label_no_score
+from utils.io import write_label_filtered
 
 
 def truncate(rows):
@@ -65,24 +66,24 @@ def convert_csv2txt(row, output_root, id):
     output_file_name = '{0}/{1}'.format(output_root, out_filename)
     result = {
         'name': [],
-        'truncated': [],
-        'occluded': [],
-        'alpha': [],
-        'bbox': [],
+        #'truncated': [],
+        #'occluded': [],
+        #'alpha': [],
+        #'bbox': [],
         'dimensions': [],
         'location': [],
         'rotation_y': []
     }
     result['name'].append('Wheelchair')
-    result['truncated'].append('0.00')
-    result['occluded'].append('3')
-    result['alpha'].append('-10')
-    result['bbox'].append(np.array(['0.00' for _ in range(4)]))
+    #result['truncated'].append('0.00')
+    #result['occluded'].append('3')
+    #result['alpha'].append('-10')
+    #result['bbox'].append(np.array(['0.00' for _ in range(4)]))
     result['dimensions'].append(truncate(row[4:7]))
     result['location'].append(truncate(row[1:4]))
     result['rotation_y'].append(truncate([row[9]]))
 
-    write_label_no_score(result, output_file_name)
+    write_label_filtered(result, output_file_name)
 
 
 def convert_dataset(bag_root, csv_root, pc_output_root, label_output_root, start_id):
