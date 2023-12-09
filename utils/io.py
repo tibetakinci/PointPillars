@@ -135,11 +135,11 @@ def write_label_filtered(result, file_path, suffix='.txt'):
     '''
     assert os.path.splitext(file_path)[1] == suffix
     name, dimensions, location, rotation_y = \
-        result['name'], result['dimensions'], result['location'], result['rotation_y']
-    print(len(name[0]))
+        result['name'][0], result['dimensions'][0], result['location'][0], result['rotation_y'][0]
+    print(len(name))
 
     with open(file_path, 'w') as f:
-        for i in range(len(name[0])):
+        for i in range(len(name)):
             hwl = ' '.join(map(str, dimensions[i]))
             xyz = ' '.join(map(str, location[i]))
             line = f'{name[i]} {hwl} {xyz} {rotation_y[i][0]}\n'
