@@ -10,11 +10,12 @@ def truncate(list):
     new_list = np.zeros(shape=(np.prod(shape)), dtype=np.float32)
     list = list.ravel()
     for i in range(len(list)):
-        new_list[i] = round(list[i], 2)
+        new_list[i] = np.round(list[i], 2)
     
     print(new_list)
     print(new_list.reshape(shape))
     print(new_list.reshape(shape).tolist())
+    print(list(new_list.reshape(shape)))
     return new_list.reshape(shape).tolist()
 
 def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
