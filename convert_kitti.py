@@ -6,22 +6,12 @@ from utils import read_calib, read_label, write_label_filtered, bbox_camera2lida
 from convert_custom_dataset import filter_files
 
 def truncate(list):
-    print(list)
     shape = list.shape
-    print(shape)
-    print(type(shape))
     new_list = np.zeros(shape=(np.prod(shape)))
-    print(new_list)
     list = list.ravel()
     for i in range(len(list)):
         new_list[i] = round(list[i], 2)
-        print(list[i])
-        print(round(list[i], 2))
-        #if list[i].find('.') != -1:
-        #    index = list[i].find('.') + 3
-        #    new_list[i] = list[i][:index]
-        #else:
-        #    new_list[i] = list[i] + '.00'
+        print(new_list[i])
     
     print(new_list)
     return new_list.reshape(shape).tolist()
