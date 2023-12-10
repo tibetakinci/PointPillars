@@ -8,21 +8,7 @@ from convert_custom_dataset import filter_files
 def truncate(list):
     new_list = np.array(["%.2f" % w for w in list.reshape(list.size)])
     new_list = new_list.reshape(list.shape)
-    print(new_list)
     return new_list.tolist()
-
-    '''
-    shape = list.shape
-    new_list = np.zeros(shape=(np.prod(shape)), dtype=np.str_)
-    list = list.ravel()
-    for i in range(len(list)):
-        new_list[i] = np.round(list[i], 2)
-    
-    print(new_list)
-    print(new_list.reshape(shape))
-    print(new_list.reshape(shape).tolist())
-    return new_list.reshape(shape).tolist()
-    '''
 
 def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     names = annotation_dict['name']

@@ -9,7 +9,11 @@ from utils import write_points, write_label_no_score
 from utils.io import write_label_filtered
 
 
-def truncate(rows):
+def truncate(list):
+    new_list = np.array(["%.2f" % w for w in list])
+    return new_list.tolist()
+
+    '''
     result = []
     for row in rows:
         if row.find('.') != -1:
@@ -19,6 +23,7 @@ def truncate(rows):
             result.append(row + '.00')
 
     return result
+    '''
 
 def filter_files(files, suffix):
     result = []
@@ -64,21 +69,14 @@ def convert_bag2bin(msg, output_root, id):
 def convert_csv2txt(row, output_root, id):
     out_filename = '{:0>6}.txt'.format(str(id))
     output_file_name = '{0}/{1}'.format(output_root, out_filename)
+    
     result = {
         'name': [],
-        #'truncated': [],
-        #'occluded': [],
-        #'alpha': [],
-        #'bbox': [],
         'dimensions': [],
         'location': [],
         'rotation_y': []
     }
     result['name'].append('Wheelchair')
-    #result['truncated'].append('0.00')
-    #result['occluded'].append('3')
-    #result['alpha'].append('-10')
-    #result['bbox'].append(np.array(['0.00' for _ in range(4)]))
     result['dimensions'].append(truncate(row[4:7]))
     result['location'].append(truncate(row[1:4]))
     result['rotation_y'].append(truncate([row[9]]))
