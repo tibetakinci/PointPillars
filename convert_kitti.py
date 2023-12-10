@@ -12,6 +12,8 @@ def truncate(list):
     print(type(shape))
     new_list = np.zeros(shape=(np.prod(shape)))
     print(new_list)
+    print(list.ravel())
+    print(list.reshape(-1))
     for i in range(len(list.ravel())):
         if list[i].find('.') != -1:
             index = list[i].find('.') + 3
