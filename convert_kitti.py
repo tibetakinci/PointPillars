@@ -15,6 +15,8 @@ def truncate(list):
     list = list.ravel()
     for i in range(len(list)):
         new_list[i] = round(list[i], 2)
+        print(list[i])
+        print(round(list[i], 2))
         #if list[i].find('.') != -1:
         #    index = list[i].find('.') + 3
         #    new_list[i] = list[i][:index]
