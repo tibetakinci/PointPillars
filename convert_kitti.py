@@ -11,6 +11,7 @@ def truncate(list):
     list = list.ravel()
     for i in range(len(list)):
         new_list[i] = round(list[i], 2)
+        print(round(list[i], 2))
         print(new_list[i])
     
     print(new_list)
