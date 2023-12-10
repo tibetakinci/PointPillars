@@ -17,9 +17,6 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     r0_rect = calib_dict['R0_rect']
     bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
 
-    print('first names')
-    print(names)
-
     result = {
         'name': [],
         'dimensions': [],
@@ -27,16 +24,15 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
         'rotation_y': []
     }
     result['name'] = names.tolist()
+    result['dimensions'] = bboxes_lidar[:, 3:6].tolist()
+    result['location'] = bboxes_lidar[:, 0:3].tolist()
+    result['rotation_y'] = bboxes_lidar[:, 6].tolist()
     #result['name'].append(names.reshape(1, bboxes_lidar.shape[0]).tolist())
-    result['dimensions'].append(bboxes_lidar[:, 3:6].reshape(3, bboxes_lidar.shape[0]).tolist())
-    result['location'].append(bboxes_lidar[:, 0:3].reshape(3, bboxes_lidar.shape[0]).tolist())
-    result['rotation_y'].append(bboxes_lidar[:, 6].reshape(1, bboxes_lidar.shape[0]).tolist())
-    print('names')
-    print(names.tolist())
-    print('names reshape')
-    print(names.reshape(1, bboxes_lidar.shape[0]).tolist())
+    #result['dimensions'].append(bboxes_lidar[:, 3:6].reshape(3, bboxes_lidar.shape[0]).tolist())
+    #result['location'].append(bboxes_lidar[:, 0:3].reshape(3, bboxes_lidar.shape[0]).tolist())
+    #result['rotation_y'].append(bboxes_lidar[:, 6].reshape(1, bboxes_lidar.shape[0]).tolist())
 
-    #print(result)
+    print(result)
     write_label_filtered(result, file_path)
 
 
