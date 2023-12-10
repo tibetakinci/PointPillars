@@ -3,8 +3,24 @@ import numpy as np
 import os
 
 from utils import read_calib, read_label, write_label_filtered, bbox_camera2lidar
-from convert_custom_dataset import filter_files, truncate
+from convert_custom_dataset import filter_files
 
+def truncate(list):
+    print(list)
+    shape = list.shape
+    print(shape)
+    print(type(shape))
+    new_list = np.zeros(shape=(1, np.prod(shape)))
+    print(new_list)
+    for i in range(len(list.ravel())):
+        if list[i].find('.') != -1:
+            index = list[i].find('.') + 3
+            new_list[i] = list[i][:index]
+        else:
+            new_list[i] = list[i] + '.00'
+    
+    print(new_list)
+    return new_list.reshape(shape).tolist()
 
 def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     names = annotation_dict['name']
@@ -24,9 +40,9 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
         'rotation_y': []
     }
     result['name'] = names.tolist()
-    result['dimensions'] = truncate(bboxes_lidar[:, 3:6].tolist())
-    result['location'] = truncate(bboxes_lidar[:, 0:3].tolist())
-    result['rotation_y'] = truncate(bboxes_lidar[:, 6].tolist())
+    result['dimensions'] = truncate(bboxes_lidar[:, 3:6])
+    result['location'] = truncate(bboxes_lidar[:, 0:3])
+    result['rotation_y'] = truncate(bboxes_lidar[:, 6])
 
     print(result)
     write_label_filtered(result, file_path)
