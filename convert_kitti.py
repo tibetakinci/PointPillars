@@ -17,13 +17,17 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     r0_rect = calib_dict['R0_rect']
     bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
 
+    print('first names')
+    print(names)
+
     result = {
         'name': [],
         'dimensions': [],
         'location': [],
         'rotation_y': []
     }
-    result['name'].append(names.reshape(1, bboxes_lidar.shape[0]).tolist())
+    result['name'] = names.tolist()
+    #result['name'].append(names.reshape(1, bboxes_lidar.shape[0]).tolist())
     result['dimensions'].append(bboxes_lidar[:, 3:6].reshape(3, bboxes_lidar.shape[0]).tolist())
     result['location'].append(bboxes_lidar[:, 0:3].reshape(3, bboxes_lidar.shape[0]).tolist())
     result['rotation_y'].append(bboxes_lidar[:, 6].reshape(1, bboxes_lidar.shape[0]).tolist())
