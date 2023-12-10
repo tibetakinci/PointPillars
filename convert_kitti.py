@@ -7,10 +7,11 @@ from convert_custom_dataset import filter_files
 
 def truncate(list):
     shape = list.shape
-    new_list = np.zeros(shape=(np.prod(shape)))
+    new_list = np.zeros(shape=(np.prod(shape)), dtype=np.float32)
     list = list.ravel()
     for i in range(len(list)):
         new_list[i] = round(list[i], 2)
+        print(type(list[i]))
         print(round(list[i], 2))
         print(new_list[i])
     
