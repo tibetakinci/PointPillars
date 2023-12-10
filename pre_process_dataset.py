@@ -11,7 +11,8 @@ sys.path.append(CUR)
 
 from utils import read_points, write_points, read_calib, read_label, \
     write_pickle, remove_outside_points, get_points_num_in_bbox, \
-    points_in_bboxes_v2
+    points_in_bboxes_v2, read_label_filtered, points_in_bboxes_v3, \
+    get_points_num_in_bbox_v2
 
 
 def judge_difficulty(annotation_dict):
@@ -49,11 +50,12 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
         os.makedirs(db_points_saved_path, exist_ok=True)
     for id in tqdm(ids):
         cur_info_dict = {}
-        img_path = os.path.join(data_root, split, 'image_2', f'{id}.png')
+        #img_path = os.path.join(data_root, split, 'image_2', f'{id}.png')
         lidar_path = os.path.join(data_root, split, 'velodyne', f'{id}.bin')
-        calib_path = os.path.join(data_root, split, 'calib', f'{id}.txt')
+        #calib_path = os.path.join(data_root, split, 'calib', f'{id}.txt')
         cur_info_dict['velodyne_path'] = sep.join(lidar_path.split(sep)[-3:])
 
+        '''
         img = cv2.imread(img_path)                                              #TODO: Remove image related lines
         image_shape = img.shape[:2]
         cur_info_dict['image'] = {
@@ -64,8 +66,10 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
 
         calib_dict = read_calib(calib_path)                                     #TODO: Remove calib related lines
         cur_info_dict['calib'] = calib_dict
+        '''
 
         lidar_points = read_points(lidar_path)
+        '''
         reduced_lidar_points = remove_outside_points(                           #TODO: ??Remove reduced_lidar??
             points=lidar_points,
             r0_rect=calib_dict['R0_rect'],
@@ -76,15 +80,14 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
         os.makedirs(saved_reduced_path, exist_ok=True)
         saved_reduced_points_name = os.path.join(saved_reduced_path, f'{id}.bin')
         write_points(reduced_lidar_points, saved_reduced_points_name)
+        '''
 
         if label:
             label_path = os.path.join(data_root, split, 'label_2', f'{id}.txt')
-            annotation_dict = read_label(label_path)                                #TODO: read_label_lidar implementation
-            annotation_dict['difficulty'] = judge_difficulty(annotation_dict)       #TODO: Remove difficulty
-            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox(           #TODO: Adjust method get_points_num_in_bbox without calib params
-                points=reduced_lidar_points,
-                r0_rect=calib_dict['R0_rect'],
-                tr_velo_to_cam=calib_dict['Tr_velo_to_cam'],
+            annotation_dict = read_label_filtered(label_path)                                #TODO: read_label_lidar implementation
+            #annotation_dict['difficulty'] = judge_difficulty(annotation_dict)               #TODO: Remove difficulty
+            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox_v2(                 #TODO: Adjust method get_points_num_in_bbox without calib params
+                points=lidar_points,                                                         #previously: points=reduced_lidar_points,
                 dimensions=annotation_dict['dimensions'],
                 location=annotation_dict['location'],
                 rotation_y=annotation_dict['rotation_y'],
@@ -93,10 +96,8 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
 
             if db:
                 indices, n_total_bbox, n_valid_bbox, bboxes_lidar, name = \
-                    points_in_bboxes_v2(
+                    points_in_bboxes_v3(
                         points=lidar_points,
-                        r0_rect=calib_dict['R0_rect'].astype(np.float32),
-                        tr_velo_to_cam=calib_dict['Tr_velo_to_cam'].astype(np.float32),
                         dimensions=annotation_dict['dimensions'].astype(np.float32),
                         location=annotation_dict['location'].astype(np.float32),
                         rotation_y=annotation_dict['rotation_y'].astype(np.float32),
@@ -112,7 +113,7 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
                         'name': name[j],
                         'path': os.path.join(os.path.basename(db_points_saved_path), f'{int(id)}_{name[j]}_{j}.bin'),
                         'box3d_lidar': bboxes_lidar[j],
-                        'difficulty': annotation_dict['difficulty'][j],
+                        #'difficulty': annotation_dict['difficulty'][j],
                         'num_points_in_gt': len(db_points),
                     }
                     if name[j] not in dbinfos_train:

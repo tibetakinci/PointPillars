@@ -89,6 +89,20 @@ def read_label(file_path):
     return annotation
 
 
+
+def read_label_filtered(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip().split(' ') for line in lines]
+    annotation = {}
+    annotation['name'] = np.array([line[0] for line in lines])
+    annotation['dimensions'] = np.array([line[8:11] for line in lines], dtype=np.float64)
+    annotation['location'] = np.array([line[11:14] for line in lines], dtype=np.float64)
+    annotation['rotation_y'] = np.array([line[14] for line in lines], dtype=np.float64)
+    
+    return annotation
+
+
 def write_label(result, file_path, suffix='.txt'):
     '''
     result: dict,

@@ -5,10 +5,12 @@ import os
 from utils import read_calib, read_label, write_label_filtered, bbox_camera2lidar
 from convert_custom_dataset import filter_files
 
+
 def truncate(list):
     new_list = np.array(["%.2f" % w for w in list.reshape(list.size)])
     new_list = new_list.reshape(list.shape)
     return new_list.tolist()
+
 
 def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     names = annotation_dict['name']

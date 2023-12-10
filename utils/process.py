@@ -637,6 +637,32 @@ def points_in_bboxes_v2(points, r0_rect, tr_velo_to_cam, dimensions, location, r
     return indices, n_total_bbox, n_valid_bbox, bboxes_lidar, name
 
 
+def points_in_bboxes_v3(points, dimensions, location, rotation_y, name):
+    '''
+    points: shape=(N, 4)
+    dimensions: shape=(n, 3) 
+    location: shape=(n, 3) 
+    rotation_y: shape=(n, ) 
+    name: shape=(n, )
+    return:
+        indices: shape=(N, n_valid_bbox), indices[i, j] denotes whether point i is in bbox j. 
+        n_total_bbox: int. 
+        n_valid_bbox: int, not including 'DontCare' 
+        bboxes_lidar: shape=(n_valid_bbox, 7) 
+        name: shape=(n_valid_bbox, )
+    '''
+    n_total_bbox = len(dimensions)
+    n_valid_bbox = len([item for item in name if item != 'DontCare'])
+    location, dimensions = location[:n_valid_bbox], dimensions[:n_valid_bbox]
+    rotation_y, name = rotation_y[:n_valid_bbox], name[:n_valid_bbox]
+    bboxes_lidar = np.concatenate([location, dimensions, rotation_y[:, None]], axis=1)
+    bboxes_corners = bbox3d2corners(bboxes_lidar)
+    group_rectangle_vertexs_v = group_rectangle_vertexs(bboxes_corners)
+    frustum_surfaces = group_plane_equation(group_rectangle_vertexs_v)
+    indices = points_in_bboxes(points[:, :3], frustum_surfaces) # (N, n), N is points num, n is bboxes number
+    return indices, n_total_bbox, n_valid_bbox, bboxes_lidar, name
+
+
 def get_points_num_in_bbox(points, r0_rect, tr_velo_to_cam, dimensions, location, rotation_y, name):
     '''
     points: shape=(N, 4) 
@@ -653,6 +679,28 @@ def get_points_num_in_bbox(points, r0_rect, tr_velo_to_cam, dimensions, location
             points=points, 
             r0_rect=r0_rect, 
             tr_velo_to_cam=tr_velo_to_cam, 
+            dimensions=dimensions, 
+            location=location, 
+            rotation_y=rotation_y, 
+            name=name)
+    points_num = np.sum(indices, axis=0)
+    non_valid_points_num = [-1] * (n_total_bbox - n_valid_bbox)
+    points_num = np.concatenate([points_num, non_valid_points_num], axis=0)
+    return np.array(points_num, dtype=np.int)
+
+
+def get_points_num_in_bbox_v2(points, dimensions, location, rotation_y, name):
+    '''
+    points: shape=(N, 4)
+    dimensions: shape=(n, 3) 
+    location: shape=(n, 3) 
+    rotation_y: shape=(n, ) 
+    name: shape=(n, )
+    return: shape=(n, )
+    '''
+    indices, n_total_bbox, n_valid_bbox, bboxes_lidar, name = \
+        points_in_bboxes_v3(
+            points=points,
             dimensions=dimensions, 
             location=location, 
             rotation_y=rotation_y, 

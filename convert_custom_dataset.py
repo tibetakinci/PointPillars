@@ -5,25 +5,13 @@ from sensor_msgs import point_cloud2
 import numpy as np
 import os
 
-from utils import write_points, write_label_no_score
-from utils.io import write_label_filtered
+from utils import write_points, write_label_filtered
 
 
 def truncate(list):
     new_list = np.array(["%.2f" % np.float32(w) for w in list])
     return new_list.tolist()
 
-    '''
-    result = []
-    for row in rows:
-        if row.find('.') != -1:
-            index = row.find('.') + 3
-            result.append(row[:index])
-        else:
-            result.append(row + '.00')
-
-    return result
-    '''
 
 def filter_files(files, suffix):
     result = []
