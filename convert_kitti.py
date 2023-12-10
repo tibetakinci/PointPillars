@@ -11,11 +11,10 @@ def truncate(list):
     list = list.ravel()
     for i in range(len(list)):
         new_list[i] = round(list[i], 2)
-        print(type(list[i]))
-        print(round(list[i], 2))
-        print(new_list[i])
     
     print(new_list)
+    print(new_list.reshape(shape))
+    print(new_list.reshape(shape).tolist())
     return new_list.reshape(shape).tolist()
 
 def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
