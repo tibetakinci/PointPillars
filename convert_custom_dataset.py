@@ -10,7 +10,7 @@ from utils.io import write_label_filtered
 
 
 def truncate(list):
-    new_list = np.array(["%.2f" % w for w in list])
+    new_list = np.array(["%.2f" % np.float32(w) for w in list])
     return new_list.tolist()
 
     '''
