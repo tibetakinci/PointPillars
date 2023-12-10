@@ -53,13 +53,13 @@ def convert_dataset(label_root, calib_root, out_root):
 
     for index in range(len(calib_files)):
         assert os.path.splitext(label_files[index])[0] == os.path.splitext(calib_files[index])[0]
-        calib_dir = '/'.join([calib_root, '000005.txt'])              #calib_files[index]])
-        label_dir = '/'.join([label_root, '000005.txt'])              #label_files[index]])
-        file_path = '/'.join([out_root, '000005.txt'])                #label_files[index]])
+        calib_dir = '/'.join([calib_root, calib_files[index]])
+        label_dir = '/'.join([label_root, label_files[index]])
+        file_path = '/'.join([out_root, label_files[index]])
         calib_dict = read_calib(calib_dir)
         annotation_dict = read_label(label_dir)
         convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path)
-        break
+        #break
 
 
 def main(args):

@@ -97,7 +97,7 @@ def convert_dataset(bag_root, csv_root, pc_output_root, label_output_root, start
             convert_bag2bin(msgs[row], pc_output_root, start_id)
             convert_csv2txt(rows[row], label_output_root, start_id)
             start_id += 1
-        break
+        #break
 
 
 def main(args):
