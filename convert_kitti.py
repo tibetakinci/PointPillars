@@ -13,13 +13,9 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
     rotation_y = annotation_dict['rotation_y']
     
     bboxes_camera = np.concatenate([location, dimensions, rotation_y[:, None]], axis=-1) # (N, 7)
-    #print('camera')
-    #print(bboxes_camera)
     tr_velo_to_cam = calib_dict['Tr_velo_to_cam']
     r0_rect = calib_dict['R0_rect']
     bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
-    #print('lidar')
-    #print(bboxes_lidar)
 
     result = {
         'name': [],
@@ -27,8 +23,8 @@ def convert_to_lidar_coordinate(calib_dict, annotation_dict, file_path):
         'location': [],
         'rotation_y': []
     }
-    result['name'].append(names[0].tolist())
-    result['dimensions'].append(bboxes_lidar[:, 3:6].tolist())
+    result['name'].append(names.tolist())
+    result['dimensions'].append(bboxes_lidar[:, 3:6].tolist()[0])
     result['location'].append(bboxes_lidar[:, 0:3].tolist())
     result['rotation_y'].append(bboxes_lidar[:, 6].tolist())
     print(bboxes_lidar[:, 3:6].shape)
