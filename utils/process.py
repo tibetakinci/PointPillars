@@ -708,7 +708,7 @@ def get_points_num_in_bbox_v2(points, dimensions, location, rotation_y, name):
     points_num = np.sum(indices, axis=0)
     non_valid_points_num = [-1] * (n_total_bbox - n_valid_bbox)
     points_num = np.concatenate([points_num, non_valid_points_num], axis=0)
-    return np.array(points_num, dtype=np.int)
+    return np.array(points_num, dtype=np.int_)
 
 
 # Modified from https://github.com/open-mmlab/mmdetection3d/blob/f45977008a52baaf97640a0e9b2bbe5ea1c4be34/mmdet3d/core/bbox/box_np_ops.py#L609

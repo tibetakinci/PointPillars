@@ -37,7 +37,7 @@ def judge_difficulty(annotation_dict):
 def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=False):
     sep = os.path.sep
     print(f"Processing {data_type} data..")
-    ids_file = os.path.join(CUR, 'dataset', 'ImageSets', f'{data_type}.txt')   #TODO: Adjust ids for train, val, test, trainval
+    ids_file = os.path.join(CUR, 'dataset', 'ImageSets', f'{data_type}.txt')                #TODO: Adjust ids for train, val, test, trainval
     with open(ids_file, 'r') as f:
         ids = [id.strip() for id in f.readlines()]
 
@@ -56,7 +56,7 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
         cur_info_dict['velodyne_path'] = sep.join(lidar_path.split(sep)[-3:])
 
         '''
-        img = cv2.imread(img_path)                                              #TODO: Remove image related lines
+        img = cv2.imread(img_path)                                                          #TODO: Remove image related lines
         image_shape = img.shape[:2]
         cur_info_dict['image'] = {
             'image_shape': image_shape,
@@ -64,13 +64,13 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
             'image_idx': int(id),
         }
 
-        calib_dict = read_calib(calib_path)                                     #TODO: Remove calib related lines
+        calib_dict = read_calib(calib_path)                                                 #TODO: Remove calib related lines
         cur_info_dict['calib'] = calib_dict
         '''
 
         lidar_points = read_points(lidar_path)
         '''
-        reduced_lidar_points = remove_outside_points(                           #TODO: ??Remove reduced_lidar??
+        reduced_lidar_points = remove_outside_points(                                       #TODO: ??Remove reduced_lidar??
             points=lidar_points,
             r0_rect=calib_dict['R0_rect'],
             tr_velo_to_cam=calib_dict['Tr_velo_to_cam'],
