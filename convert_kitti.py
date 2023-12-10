@@ -14,11 +14,12 @@ def truncate(list):
     print(new_list)
     list = list.ravel()
     for i in range(len(list)):
-        if list[i].find('.') != -1:
-            index = list[i].find('.') + 3
-            new_list[i] = list[i][:index]
-        else:
-            new_list[i] = list[i] + '.00'
+        new_list[i] = round(list[i], 2)
+        #if list[i].find('.') != -1:
+        #    index = list[i].find('.') + 3
+        #    new_list[i] = list[i][:index]
+        #else:
+        #    new_list[i] = list[i] + '.00'
     
     print(new_list)
     return new_list.reshape(shape).tolist()
