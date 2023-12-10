@@ -10,7 +10,7 @@ def truncate(list):
     shape = list.shape
     print(shape)
     print(type(shape))
-    new_list = np.zeros(shape=(1, np.prod(shape)))
+    new_list = np.zeros(shape=(np.prod(shape)))
     print(new_list)
     for i in range(len(list.ravel())):
         if list[i].find('.') != -1:
