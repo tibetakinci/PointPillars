@@ -79,7 +79,7 @@ def convert_csv2txt(row, output_root, id):
     result['name'].append('Wheelchair')
     result['dimensions'].append(truncate(row[4:7]))
     result['location'].append(truncate(row[1:4]))
-    result['rotation_y'].append(truncate([row[9]]))
+    result['rotation_y'] = truncate([row[9]])
 
     write_label_filtered(result, output_file_name)
 
