@@ -20,8 +20,8 @@ def bin_to_pcd(binFileName):
 
 
 def main(args):
-    bin_file = args.bin_file_name
-    pcd_file = args.pcd_file_name
+    bin_file = args.bin
+    pcd_file = args.pcd
 
     pcd = bin_to_pcd(bin_file)
     o3d.io.write_point_cloud(pcd_file, pcd)
@@ -29,8 +29,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Dataset infomation')
-    parser.add_argument('--bin_file_name', default='/mnt/ssd1/lifa_rdata/det/kitti', help='directory for .bin file to convert')
-    parser.add_argument('--pcd_file_name', default='/mnt/ssd1/lifa_rdata/det/kitti', help='directory to save .pcd file that has been converted')
+    parser.add_argument('--bin', default='/mnt/ssd1/lifa_rdata/det/kitti', help='directory for .bin file to convert')
+    parser.add_argument('--pcd', default='/mnt/ssd1/lifa_rdata/det/kitti', help='directory to save .pcd file that has been converted')
     args = parser.parse_args()
 
     main(args)
