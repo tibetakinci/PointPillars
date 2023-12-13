@@ -69,7 +69,7 @@ def collate_fn_custom(list_data):
 
 
 def get_dataloader(dataset, batch_size, num_workers, shuffle=True, drop_last=False):
-    collate = collate_fn_kitti if dataset == 'kitti' else collate_fn_custom
+    collate = collate_fn_kitti if dataset.return_dataset_name() == 'kitti' else collate_fn_custom
     dataloader = DataLoader(
         dataset=dataset,
         batch_size=batch_size,

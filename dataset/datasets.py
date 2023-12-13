@@ -34,7 +34,6 @@ class BaseSampler():
 
 
 class Kitti(Dataset):
-
     CLASSES = {
         'Pedestrian': 0, 
         'Cyclist': 1, 
@@ -136,6 +135,9 @@ class Kitti(Dataset):
 
     def __len__(self):
         return len(self.data_infos)
+    
+    def return_dataset_name(self):
+        return 'kitti'
 
     def return_classes(self):
         return self.CLASSES
@@ -151,7 +153,7 @@ class Custom(Dataset):
 
     def __init__(self, data_root, split, pts_prefix='velodyne'):
         assert split in ['train', 'val', 'trainval', 'test']
-        self.dataset_name = 'kitti'
+        self.dataset_name = 'custom'
         self.data_root = data_root
         self.split = split
         self.pts_prefix = pts_prefix
@@ -166,7 +168,7 @@ class Custom(Dataset):
         self.data_aug_config=dict(
             db_sampler=dict(
                 db_sampler=db_sampler,
-                sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10)
+                sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10, Wheelchair=10)
                 ),
             object_noise=dict(
                 num_try=100,
@@ -183,12 +185,9 @@ class Custom(Dataset):
             object_range_filter=[0, -39.68, -3, 69.12, 39.68, 1]             
         )
 
-    def return_pts_prefix(self):
-        return self.pts_prefix
-
     def filter_db(self, db_infos):
         # filter_by_min_points, dict(Car=5, Pedestrian=10, Cyclist=10)
-        filter_thrs = dict(Car=5, Pedestrian=10, Cyclist=10)
+        filter_thrs = dict(Car=5, Pedestrian=10, Cyclist=10, Wheelchair=10)
         for cat in self.CLASSES:
             filter_thr = filter_thrs[cat]
             db_infos[cat] = [item for item in db_infos[cat] if item['num_points_in_gt'] >= filter_thr]
@@ -236,9 +235,21 @@ class Custom(Dataset):
         '''
 
         return data_dict
+    
+    def remove_dont_care(self, annos_info):
+        keep_ids = [i for i, name in enumerate(annos_info['name']) if name != 'DontCare']
+        for k, v in annos_info.items():
+            annos_info[k] = v[keep_ids]
+        return annos_info
+    
+    def return_pts_prefix(self):
+        return self.pts_prefix
 
     def __len__(self):
         return len(self.data_infos)
+    
+    def return_dataset_name(self):
+        return 'custom'
 
 
 if __name__ == '__main__':

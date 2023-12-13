@@ -56,7 +56,7 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
         cur_info_dict['velodyne_path'] = sep.join(lidar_path.split(sep)[-3:])
 
         '''
-        img = cv2.imread(img_path)                                                          #TODO: Remove image related lines
+        img = cv2.imread(img_path)
         image_shape = img.shape[:2]
         cur_info_dict['image'] = {
             'image_shape': image_shape,
@@ -64,13 +64,13 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
             'image_idx': int(id),
         }
 
-        calib_dict = read_calib(calib_path)                                                 #TODO: Remove calib related lines
+        calib_dict = read_calib(calib_path)
         cur_info_dict['calib'] = calib_dict
         '''
 
         lidar_points = read_points(lidar_path)
         '''
-        reduced_lidar_points = remove_outside_points(                                       #TODO: ??Remove reduced_lidar??
+        reduced_lidar_points = remove_outside_points(
             points=lidar_points,
             r0_rect=calib_dict['R0_rect'],
             tr_velo_to_cam=calib_dict['Tr_velo_to_cam'],
@@ -84,9 +84,9 @@ def create_data_info_pkl(data_root, data_type, dataset_name, label=True, db=Fals
 
         if label:
             label_path = os.path.join(data_root, split, 'label_2', f'{id}.txt')
-            annotation_dict = read_label_filtered(label_path)                                #TODO: read_label_lidar implementation
-            #annotation_dict['difficulty'] = judge_difficulty(annotation_dict)               #TODO: Remove difficulty
-            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox_v2(                 #TODO: Adjust method get_points_num_in_bbox without calib params
+            annotation_dict = read_label_filtered(label_path)
+            #annotation_dict['difficulty'] = judge_difficulty(annotation_dict)
+            annotation_dict['num_points_in_gt'] = get_points_num_in_bbox_v2(
                 points=lidar_points,                                                         #previously: points=reduced_lidar_points,
                 dimensions=annotation_dict['dimensions'],
                 location=annotation_dict['location'],
