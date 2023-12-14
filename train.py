@@ -88,12 +88,18 @@ def main(args):
             batched_pts = data_dict['batched_pts']
             batched_gt_bboxes = data_dict['batched_gt_bboxes']
             batched_labels = data_dict['batched_labels']
+            print('batched_pts')
+            print(batched_pts)
             #batched_difficulty = data_dict['batched_difficulty']
             bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict = \
                 pointpillars(batched_pts=batched_pts,
                              mode='train',
                              batched_gt_bboxes=batched_gt_bboxes,
                              batched_gt_labels=batched_labels)
+            print('bbox_pred')
+            print(bbox_pred)
+            print('anchor_target_dict')
+            print(anchor_target_dict)
 
             bbox_cls_pred = bbox_cls_pred.permute(0, 2, 3, 1).reshape(-1, args.nclasses)
             bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 7)
@@ -107,6 +113,12 @@ def main(args):
             # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
 
             pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
+
+            print('pos_idx')
+            print(pos_idx)
+            print('bbox_pred[pos_idx]')
+            print(bbox_pred[pos_idx])
+            
             bbox_pred = bbox_pred[pos_idx]
             batched_bbox_reg = batched_bbox_reg[pos_idx]
             # sin(a - b) = sin(a)*cos(b) - cos(a)*sin(b)
