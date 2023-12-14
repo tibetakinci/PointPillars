@@ -142,6 +142,8 @@ class Backbone(nn.Module):
         for i in range(len(self.multi_blocks)):
             x = self.multi_blocks[i](x)
             outs.append(x)
+        print('backbone')
+        print(outs)
         return outs
 
 
@@ -178,6 +180,8 @@ class Neck(nn.Module):
         for i in range(len(self.decoder_blocks)):
             xi = self.decoder_blocks[i](x[i]) # (bs, 128, 248, 216)
             outs.append(xi)
+        print('neck')
+        print(outs)
         out = torch.cat(outs, dim=1)
         return out
 
