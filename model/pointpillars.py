@@ -116,12 +116,12 @@ class Backbone(nn.Module):
         self.multi_blocks = nn.ModuleList()
         for i in range(len(layer_strides)):
             blocks = []
-            blocks.append(nn.Conv2d(in_channel, out_channels[i], 3, stride=layer_strides[i], bias=False, padding=1))
+            blocks.append(nn.Conv2d(in_channel, out_channels[i], 2, stride=layer_strides[i], bias=False, padding=1))    #3
             blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
             blocks.append(nn.ReLU(inplace=True))
 
             for _ in range(layer_nums[i]):
-                blocks.append(nn.Conv2d(out_channels[i], out_channels[i], 3, bias=False, padding=1))
+                blocks.append(nn.Conv2d(out_channels[i], out_channels[i], 2, bias=False, padding=1))                    #3
                 blocks.append(nn.BatchNorm2d(out_channels[i], eps=1e-3, momentum=0.01))
                 blocks.append(nn.ReLU(inplace=True))
 
@@ -143,6 +143,7 @@ class Backbone(nn.Module):
             x = self.multi_blocks[i](x)
             outs.append(x)
         print('backbone')
+        print(outs.shape)
         print(outs[1].shape)
         return outs
 
@@ -181,6 +182,7 @@ class Neck(nn.Module):
             xi = self.decoder_blocks[i](x[i]) # (bs, 128, 248, 216)
             outs.append(xi)
         print('neck')
+        print(outs.shape)
         print(outs[1].shape)
         out = torch.cat(outs, dim=1)
         return out
@@ -239,10 +241,10 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 128, 128],                  #out_channels=[64, 128, 256]
+                                 out_channels=[64, 128, 128, 256],                  #out_channels=[64, 128, 256]
                                  layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 128, 128],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 2, 2],                             #upsample_strides=[1, 2, 4]
+        self.neck = Neck(in_channels=[64, 128, 128, 256],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 2, 4],                             #upsample_strides=[1, 2, 4]
                          out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
         self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
