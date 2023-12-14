@@ -181,7 +181,7 @@ class Neck(nn.Module):
             xi = self.decoder_blocks[i](x[i]) # (bs, 128, 248, 216)
             outs.append(xi)
         print('neck')
-        print(outs[1])
+        print(outs[1].shape)
         out = torch.cat(outs, dim=1)
         return out
 
