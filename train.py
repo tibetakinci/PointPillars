@@ -107,14 +107,6 @@ def main(args):
             # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
 
             pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
-
-            print('i')
-            print(i)
-            print('pos_idx')
-            print(pos_idx)
-            print('bbox_pred[pos_idx]')
-            print(bbox_pred[pos_idx])
-
             bbox_pred = bbox_pred[pos_idx]
             batched_bbox_reg = batched_bbox_reg[pos_idx]
             # sin(a - b) = sin(a)*cos(b) - cos(a)*sin(b)

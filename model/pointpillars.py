@@ -108,7 +108,7 @@ class PillarEncoder(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]):
+    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2, 2]): #layer_strides=[2, 2, 2]
         super().__init__()
         assert len(out_channels) == len(layer_nums)
         assert len(out_channels) == len(layer_strides)
@@ -235,12 +235,12 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 256], 
-                                 layer_nums=[3, 5, 5])
-        self.neck = Neck(in_channels=[64, 128, 256], 
-                         upsample_strides=[1, 2, 4], 
-                         out_channels=[128, 128, 128])
-        self.head = Head(in_channel=384, n_anchors=2*nclasses, n_classes=nclasses)
+                                 out_channels=[64, 128, 128, 256],                  #out_channels=[64, 128, 256]
+                                 layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
+        self.neck = Neck(in_channels=[64, 128, 128, 256],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 2, 4],                             #upsample_strides=[1, 2, 4]
+                         out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
+        self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
         # anchors
         ranges = [[0, -39.68, -0.6, 69.12, 39.68, -0.6],
