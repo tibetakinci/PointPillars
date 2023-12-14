@@ -239,10 +239,10 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 128, 256],                  #out_channels=[64, 128, 256]
+                                 out_channels=[64, 128, 128, 128],                  #out_channels=[64, 128, 256]
                                  layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 128, 256],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 2, 4],                             #upsample_strides=[1, 2, 4]
+        self.neck = Neck(in_channels=[64, 128, 128, 128],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 2, 2],                             #upsample_strides=[1, 2, 4]
                          out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
         self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
