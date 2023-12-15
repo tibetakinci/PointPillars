@@ -89,6 +89,11 @@ python pre_process_dataset.py --data_root your_path_to_kitti
 After running [pre_process_dataset.py](pre_process_dataset.py) script, dataset folder should look like this:
 ```
 dataset_name
+|── ImageSets
+    ├── test (.txt)
+    ├── train (.txt)
+    ├── trainval (.txt)
+    └── val (.txt)
 |── training
     ├── label_2 (.txt)
     └── velodyne (.bin)
