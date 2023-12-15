@@ -142,9 +142,6 @@ class Backbone(nn.Module):
         for i in range(len(self.multi_blocks)):
             x = self.multi_blocks[i](x)
             outs.append(x)
-        print('backbone')
-        print(len(outs))
-        print(outs[1].shape)
         return outs
 
 
@@ -181,9 +178,6 @@ class Neck(nn.Module):
         for i in range(len(self.decoder_blocks)):
             xi = self.decoder_blocks[i](x[i]) # (bs, 128, 248, 216)
             outs.append(xi)
-        print('neck')
-        print(len(outs))
-        print(outs[1].shape)
         out = torch.cat(outs, dim=1)
         return out
 
@@ -241,10 +235,10 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 128, 256],                  #out_channels=[64, 128, 256]
+                                 out_channels=[64, 128, 256, 128],                  #out_channels=[64, 128, 256]
                                  layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 128, 256],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 2, 4],                             #upsample_strides=[1, 2, 4]
+        self.neck = Neck(in_channels=[64, 128, 256, 128],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 4, 2],                             #upsample_strides=[1, 2, 4]
                          out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
         self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
@@ -390,12 +384,21 @@ class PointPillars(nn.Module):
         # npoints_per_pillar: (p1 + p2 + ... + pb, )
         #                     -> pillar_features: (bs, out_channel, y_l, x_l)
         pillar_features = self.pillar_encoder(pillars, coors_batch, npoints_per_pillar)
+        print('encoder')
+        print(len(pillar_features))
+        print(pillar_features[0].shape)
 
         # xs:  [(bs, 64, 248, 216), (bs, 128, 124, 108), (bs, 256, 62, 54)]
         xs = self.backbone(pillar_features)
+        print('backbone')
+        print(len(xs))
+        print(xs[0].shape)
 
         # x: (bs, 384, 248, 216)
         x = self.neck(xs)
+        print('neck')
+        print(len(x))
+        print(x[0].shape)
 
         # bbox_cls_pred: (bs, n_anchors*3, 248, 216) 
         # bbox_pred: (bs, n_anchors*7, 248, 216)

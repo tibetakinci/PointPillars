@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import pdb
+import datetime
 
 from utils import setup_seed
 from dataset import Kitti, get_dataloader, Custom
@@ -66,10 +67,11 @@ def main(args):
                                                     base_momentum=0.95 * 0.895,
                                                     max_momentum=0.95,
                                                     div_factor=10)
-    saved_logs_path = os.path.join(args.saved_path, 'summary')
+    saved_path = os.path.join(args.saved_path,  str(datetime.datetime.now()))
+    saved_logs_path = os.path.join(saved_path, 'summary')
     os.makedirs(saved_logs_path, exist_ok=True)
     writer = SummaryWriter(saved_logs_path)
-    saved_ckpt_path = os.path.join(args.saved_path, 'checkpoints')
+    saved_ckpt_path = os.path.join(saved_path, 'checkpoints')
     os.makedirs(saved_ckpt_path, exist_ok=True)
 
     for epoch in range(args.max_epoch):
