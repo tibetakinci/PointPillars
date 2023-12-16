@@ -8,7 +8,7 @@ from tqdm import tqdm
 from utils import setup_seed, keep_bbox_from_image_range, \
     keep_bbox_from_lidar_range, write_pickle, write_label, \
     iou2d, iou3d_camera, iou_bev, keep_bbox_from_lidar_range_v2
-from dataset import Kitti, get_dataloader
+from dataset import Kitti, get_dataloader, Custom
 from model import PointPillars
 
 
@@ -304,6 +304,7 @@ def main(args):
         model = PointPillars(nclasses=args.nclasses)
         model.load_state_dict(
             torch.load(args.ckpt, map_location=torch.device('cpu')))
+    print(model.state_dict())
     
     saved_path = args.saved_path
     os.makedirs(saved_path, exist_ok=True)
