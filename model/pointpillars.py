@@ -235,18 +235,19 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 256, 128],                  #out_channels=[64, 128, 256]
+                                 out_channels=[64, 128, 256, 512],                  #out_channels=[64, 128, 256]
                                  layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 256, 128],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 4, 2],                             #upsample_strides=[1, 2, 4]
+        self.neck = Neck(in_channels=[64, 128, 256, 512],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 4, 8],                             #upsample_strides=[1, 2, 4]
                          out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
         self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
         # anchors
         ranges = [[0, -39.68, -0.6, 69.12, 39.68, -0.6],
                     [0, -39.68, -0.6, 69.12, 39.68, -0.6],
-                    [0, -39.68, -1.78, 69.12, 39.68, -1.78]]
-        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56]]
+                    [0, -39.68, -1.78, 69.12, 39.68, -1.78],
+                    [0, -39.68, -1.78, 69.12, 39.68, -0.6]]
+        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.8, 1.08]]
         rotations=[0, 1.57]
         self.anchors_generator = Anchors(ranges=ranges, 
                                          sizes=sizes, 
@@ -257,6 +258,7 @@ class PointPillars(nn.Module):
             {'pos_iou_thr': 0.5, 'neg_iou_thr': 0.35, 'min_iou_thr': 0.35},
             {'pos_iou_thr': 0.5, 'neg_iou_thr': 0.35, 'min_iou_thr': 0.35},
             {'pos_iou_thr': 0.6, 'neg_iou_thr': 0.45, 'min_iou_thr': 0.45},
+            {'pos_iou_thr': 0.5, 'neg_iou_thr': 0.35, 'min_iou_thr': 0.35}
         ]
 
         # val and test
@@ -384,21 +386,12 @@ class PointPillars(nn.Module):
         # npoints_per_pillar: (p1 + p2 + ... + pb, )
         #                     -> pillar_features: (bs, out_channel, y_l, x_l)
         pillar_features = self.pillar_encoder(pillars, coors_batch, npoints_per_pillar)
-        print('encoder')
-        print(len(pillar_features))
-        print(pillar_features[0].shape)
 
         # xs:  [(bs, 64, 248, 216), (bs, 128, 124, 108), (bs, 256, 62, 54)]
         xs = self.backbone(pillar_features)
-        print('backbone')
-        print(len(xs))
-        print(xs[0].shape)
 
         # x: (bs, 384, 248, 216)
         x = self.neck(xs)
-        print('neck')
-        print(len(x))
-        print(x[0].shape)
 
         # bbox_cls_pred: (bs, n_anchors*3, 248, 216) 
         # bbox_pred: (bs, n_anchors*7, 248, 216)

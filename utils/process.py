@@ -608,6 +608,25 @@ def keep_bbox_from_lidar_range(result, pcd_limit_range):
     return result
 
 
+def keep_bbox_from_lidar_range_v2(result, pcd_limit_range):
+    '''
+    result: dict(lidar_bboxes, labels, scores)
+    pcd_limit_range: []
+    return: dict(lidar_bboxes, labels, scores)
+    '''
+    lidar_bboxes, labels, scores = result['lidar_bboxes'], result['labels'], result['scores']
+    flag1 = lidar_bboxes[:, :3] > pcd_limit_range[:3][None, :] # (n, 3)
+    flag2 = lidar_bboxes[:, :3] < pcd_limit_range[3:][None, :] # (n, 3)
+    keep_flag = np.all(flag1, axis=-1) & np.all(flag2, axis=-1)
+    
+    result = {
+        'lidar_bboxes': lidar_bboxes[keep_flag],
+        'labels': labels[keep_flag],
+        'scores': scores[keep_flag]
+    }
+    return result
+
+
 def points_in_bboxes_v2(points, r0_rect, tr_velo_to_cam, dimensions, location, rotation_y, name):
     '''
     points: shape=(N, 4) 

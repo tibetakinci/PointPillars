@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from utils import setup_seed, keep_bbox_from_image_range, \
     keep_bbox_from_lidar_range, write_pickle, write_label, \
-    iou2d, iou3d_camera, iou_bev
+    iou2d, iou3d_camera, iou_bev, keep_bbox_from_lidar_range_v2
 from dataset import Kitti, get_dataloader
 from model import PointPillars
 
@@ -44,7 +44,7 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
 
     # 1. calculate iou
     ious = {
-        'bbox_2d': [],
+        #'bbox_2d': [],
         'bbox_bev': [],
         'bbox_3d': []
     }
@@ -54,10 +54,10 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
         det_result = det_results[id]
 
         # 1.1, 2d bboxes iou
-        gt_bboxes2d = gt_result['bbox'].astype(np.float32)
-        det_bboxes2d = det_result['bbox'].astype(np.float32)
-        iou2d_v = iou2d(torch.from_numpy(gt_bboxes2d).cuda(), torch.from_numpy(det_bboxes2d).cuda())
-        ious['bbox_2d'].append(iou2d_v.cpu().numpy())
+        #gt_bboxes2d = gt_result['bbox'].astype(np.float32)
+        #det_bboxes2d = det_result['bbox'].astype(np.float32)
+        #iou2d_v = iou2d(torch.from_numpy(gt_bboxes2d).cuda(), torch.from_numpy(det_bboxes2d).cuda())
+        #ious['bbox_2d'].append(iou2d_v.cpu().numpy())
 
         # 1.2, bev iou
         gt_location = gt_result['location'].astype(np.float32)
@@ -81,19 +81,20 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
     MIN_IOUS = {
         'Pedestrian': [0.5, 0.5, 0.5],
         'Cyclist': [0.5, 0.5, 0.5],
-        'Car': [0.7, 0.7, 0.7]
+        'Car': [0.7, 0.7, 0.7],
+        'Wheelchair': [0.5, 0.5, 0.5]
     }
-    MIN_HEIGHT = [40, 25, 25]
+    MIN_HEIGHT = [40, 25, 25, 10]
 
     overall_results = {}
-    for e_ind, eval_type in enumerate(['bbox_2d', 'bbox_bev', 'bbox_3d']):
+    for e_ind, eval_type in enumerate(['bbox_bev', 'bbox_3d']): #'bbox_2d'
         eval_ious = ious[eval_type]
         eval_ap_results, eval_aos_results = {}, {}
         for cls in CLASSES:
             eval_ap_results[cls] = []
             eval_aos_results[cls] = []
             CLS_MIN_IOU = MIN_IOUS[cls][e_ind]
-            for difficulty in [0, 1, 2]:
+            for difficulty in [0, 1, 2, 3]:                 #[0, 1, 2]
                 # 1. bbox property
                 total_gt_ignores, total_det_ignores, total_dc_bboxes, total_scores = [], [], [], []
                 total_gt_alpha, total_det_alpha = [], []
@@ -103,10 +104,10 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
 
                     # 1.1 gt bbox property
                     cur_gt_names = gt_result['name']
-                    cur_difficulty = gt_result['difficulty']
+                    #cur_difficulty = gt_result['difficulty']
                     gt_ignores, dc_bboxes = [], []
                     for j, cur_gt_name in enumerate(cur_gt_names):
-                        ignore = cur_difficulty[j] < 0 or cur_difficulty[j] > difficulty
+                        #ignore = cur_difficulty[j] < 0 or cur_difficulty[j] > difficulty
                         if cur_gt_name == cls:
                             valid_class = 1
                         elif cls == 'Pedestrian' and cur_gt_name == 'Person_sitting':
@@ -116,33 +117,33 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                         else:
                             valid_class = -1
                         
-                        if valid_class == 1 and not ignore:
+                        if valid_class == 1:                                #and not ignore:
                             gt_ignores.append(0)
-                        elif valid_class == 0 or (valid_class == 1 and ignore):
+                        elif valid_class == 0 or valid_class == 1:          #(valid_class == 1 and ignore):
                             gt_ignores.append(1)
                         else:
                             gt_ignores.append(-1)
                         
-                        if cur_gt_name == 'DontCare':
-                            dc_bboxes.append(gt_result['bbox'][j])
+                        #if cur_gt_name == 'DontCare':
+                            #dc_bboxes.append(gt_result['bbox'][j])
                     total_gt_ignores.append(gt_ignores)
-                    total_dc_bboxes.append(np.array(dc_bboxes))
-                    total_gt_alpha.append(gt_result['alpha'])
+                    #total_dc_bboxes.append(np.array(dc_bboxes))
+                    #total_gt_alpha.append(gt_result['alpha'])
 
                     # 1.2 det bbox property
                     cur_det_names = det_result['name']
-                    cur_det_heights = det_result['bbox'][:, 3] - det_result['bbox'][:, 1]
+                    #cur_det_heights = det_result['bbox'][:, 3] - det_result['bbox'][:, 1]
                     det_ignores = []
                     for j, cur_det_name in enumerate(cur_det_names):
-                        if cur_det_heights[j] < MIN_HEIGHT[difficulty]:
-                            det_ignores.append(1)
-                        elif cur_det_name == cls:
+                        #if cur_det_heights[j] < MIN_HEIGHT[difficulty]:
+                            #det_ignores.append(1)
+                        if cur_det_name == cls:                 #elif
                             det_ignores.append(0)
                         else:
                             det_ignores.append(-1)
                     total_det_ignores.append(det_ignores)
                     total_scores.append(det_result['score'])
-                    total_det_alpha.append(det_result['alpha'])
+                    #total_det_alpha.append(det_result['alpha'])
 
                 # 2. calculate scores thresholds for PR curve
                 tp_scores = []
@@ -177,7 +178,7 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                     for i, id in enumerate(ids):
                         cur_eval_ious = eval_ious[i]
                         gt_ignores, det_ignores = total_gt_ignores[i], total_det_ignores[i]
-                        gt_alpha, det_alpha = total_gt_alpha[i], total_det_alpha[i]
+                        #gt_alpha, det_alpha = total_gt_alpha[i], total_det_alpha[i]
                         scores = total_scores[i]
 
                         nn, mm = cur_eval_ious.shape
@@ -199,8 +200,8 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                                 assigned[match_id] = True
                                 if det_ignores[match_id] == 0 and gt_ignores[j] == 0:
                                     tp += 1
-                                    if eval_type == 'bbox_2d':
-                                        aos += (1 + np.cos(gt_alpha[j] - det_alpha[match_id])) / 2
+                                    #if eval_type == 'bbox_2d':
+                                        #aos += (1 + np.cos(gt_alpha[j] - det_alpha[match_id])) / 2
                             else:
                                 if gt_ignores[j] == 0:
                                     fn += 1
@@ -210,6 +211,7 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                                 fp += 1
                         
                         # In case 2d bbox evaluation, we should consider dontcare bboxes
+                        '''
                         if eval_type == 'bbox_2d':
                             dc_bboxes = total_dc_bboxes[i]
                             det_bboxes = det_results[id]['bbox']
@@ -221,12 +223,12 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                                             if ious_dc_det[j, k] > CLS_MIN_IOU:
                                                 fp -= 1
                                                 assigned[k] = True
-                            
+                        '''
                     tps.append(tp)
                     fns.append(fn)
                     fps.append(fp)
-                    if eval_type == 'bbox_2d':
-                        total_aos.append(aos)
+                    #if eval_type == 'bbox_2d':
+                        #total_aos.append(aos)
 
                 tps, fns, fps = np.array(tps), np.array(fns), np.array(fps)
 
@@ -241,6 +243,7 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                 mAP = sums_AP / 11 * 100
                 eval_ap_results[cls].append(mAP)
 
+                '''
                 if eval_type == 'bbox_2d':
                     total_aos = np.array(total_aos)
                     similarity = total_aos / (tps + fps)
@@ -251,22 +254,24 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                         sums_similarity += similarity[i]
                     mSimilarity = sums_similarity / 11 * 100
                     eval_aos_results[cls].append(mSimilarity)
+                '''
 
         print(f'=========={eval_type.upper()}==========')
         print(f'=========={eval_type.upper()}==========', file=f)
         for k, v in eval_ap_results.items():
             print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}')
             print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}', file=f)
+        '''
         if eval_type == 'bbox_2d':
             print(f'==========AOS==========')
             print(f'==========AOS==========', file=f)
             for k, v in eval_aos_results.items():
                 print(f'{k} AOS@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}')
                 print(f'{k} AOS@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}', file=f)
-        
+        '''
         overall_results[eval_type] = np.mean(list(eval_ap_results.values()), 0)
-        if eval_type == 'bbox_2d':
-            overall_results['AOS'] = np.mean(list(eval_aos_results.values()), 0)
+        #if eval_type == 'bbox_2d':
+            #overall_results['AOS'] = np.mean(list(eval_aos_results.values()), 0)
     
     print(f'\n==========Overall==========')
     print(f'\n==========Overall==========', file=f)
@@ -277,13 +282,19 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
     
 
 def main(args):
-    val_dataset = Kitti(data_root=args.data_root,
-                        split='val')
+    if args.dataset_name == 'kitti':
+        val_dataset = Kitti(data_root=args.data_root, split='val')
+        CLASSES = Kitti.CLASSES
+    elif args.dataset_name == 'custom':
+        val_dataset = Custom(data_root=args.data_root, split='val')
+        CLASSES = Custom.CLASSES
+    else: 
+        raise ValueError("Dataset name should be 'kitti' or 'custom'")
+    
     val_dataloader = get_dataloader(dataset=val_dataset, 
                                     batch_size=args.batch_size, 
                                     num_workers=args.num_workers,
                                     shuffle=False)
-    CLASSES = Kitti.CLASSES
     LABEL2CLASSES = {v:k for k, v in CLASSES.items()}
 
     if not args.no_cuda:
@@ -316,7 +327,7 @@ def main(args):
             batched_pts = data_dict['batched_pts']
             batched_gt_bboxes = data_dict['batched_gt_bboxes']
             batched_labels = data_dict['batched_labels']
-            batched_difficulty = data_dict['batched_difficulty']
+            #batched_difficulty = data_dict['batched_difficulty']
             batch_results = model(batched_pts=batched_pts, 
                                   mode='val',
                                   batched_gt_bboxes=batched_gt_bboxes, 
@@ -325,24 +336,20 @@ def main(args):
             for j, result in enumerate(batch_results):
                 format_result = {
                     'name': [],
-                    'truncated': [],
-                    'occluded': [],
-                    'alpha': [],
-                    'bbox': [],
                     'dimensions': [],
                     'location': [],
                     'rotation_y': [],
                     'score': []
                 }
                 
-                calib_info = data_dict['batched_calib_info'][j]
-                tr_velo_to_cam = calib_info['Tr_velo_to_cam'].astype(np.float32)
-                r0_rect = calib_info['R0_rect'].astype(np.float32)
-                P2 = calib_info['P2'].astype(np.float32)
-                image_shape = data_dict['batched_img_info'][j]['image_shape']
-                idx = data_dict['batched_img_info'][j]['image_idx']
-                result_filter = keep_bbox_from_image_range(result, tr_velo_to_cam, r0_rect, P2, image_shape)
-                result_filter = keep_bbox_from_lidar_range(result_filter, pcd_limit_range)
+                #calib_info = data_dict['batched_calib_info'][j]
+                #tr_velo_to_cam = calib_info['Tr_velo_to_cam'].astype(np.float32)
+                #r0_rect = calib_info['R0_rect'].astype(np.float32)
+                #P2 = calib_info['P2'].astype(np.float32)
+                #image_shape = data_dict['batched_img_info'][j]['image_shape']
+                #idx = data_dict['batched_img_info'][j]['image_idx']
+                #result_filter = keep_bbox_from_image_range(result, tr_velo_to_cam, r0_rect, P2, image_shape)
+                result_filter = keep_bbox_from_lidar_range_v2(result, pcd_limit_range)
 
                 lidar_bboxes = result_filter['lidar_bboxes']
                 labels, scores = result_filter['labels'], result_filter['scores']
@@ -350,17 +357,17 @@ def main(args):
                 for lidar_bbox, label, score, bbox2d, camera_bbox in \
                     zip(lidar_bboxes, labels, scores, bboxes2d, camera_bboxes):
                     format_result['name'].append(LABEL2CLASSES[label])
-                    format_result['truncated'].append(0.0)
-                    format_result['occluded'].append(0)
-                    alpha = camera_bbox[6] - np.arctan2(camera_bbox[0], camera_bbox[2])
-                    format_result['alpha'].append(alpha)
-                    format_result['bbox'].append(bbox2d)
-                    format_result['dimensions'].append(camera_bbox[3:6])
-                    format_result['location'].append(camera_bbox[:3])
-                    format_result['rotation_y'].append(camera_bbox[6])
+                    #format_result['truncated'].append(0.0)
+                    #format_result['occluded'].append(0)
+                    #alpha = camera_bbox[6] - np.arctan2(camera_bbox[0], camera_bbox[2])
+                    #format_result['alpha'].append(alpha)
+                    #format_result['bbox'].append(bbox2d)
+                    format_result['dimensions'].append(lidar_bbox[3:6])     #camera_bbox
+                    format_result['location'].append(lidar_bbox[:3])        #camera_bbox
+                    format_result['rotation_y'].append(lidar_bbox[6])       #camera_bbox
                     format_result['score'].append(score)
                 
-                write_label(format_result, os.path.join(saved_submit_path, f'{idx:06d}.txt'))
+                write_label_filtered(format_result, os.path.join(saved_submit_path, f'{idx:06d}.txt'))      #write_label
 
                 format_results[idx] = {k:np.array(v) for k, v in format_result.items()}
         
@@ -376,6 +383,7 @@ if __name__ == '__main__':
                         help='your data root for kitti')
     parser.add_argument('--ckpt', default='pretrained/epoch_160.pth', help='your checkpoint for kitti')
     parser.add_argument('--saved_path', default='results', help='your saved path for predicted results')
+    parser.add_argument('--dataset_name', default='custom')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--nclasses', type=int, default=3)
