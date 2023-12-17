@@ -7,7 +7,8 @@ from tqdm import tqdm
 
 from utils import setup_seed, keep_bbox_from_image_range, \
     keep_bbox_from_lidar_range, write_pickle, write_label, \
-    iou2d, iou3d_camera, iou_bev, keep_bbox_from_lidar_range_v2
+    iou2d, iou3d_camera, iou_bev, keep_bbox_from_lidar_range_v2, \
+    write_label_filtered
 from dataset import Kitti, get_dataloader, Custom
 from model import PointPillars
 
@@ -39,6 +40,9 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
     gt_results: dict(id -> det_results)
     CLASSES: dict
     '''
+    print(len(det_results))
+    print(len(gt_results))
+    return
     assert len(det_results) == len(gt_results)
     f = open(os.path.join(saved_path, 'eval_results.txt'), 'w')
 
@@ -296,6 +300,9 @@ def main(args):
                                     num_workers=args.num_workers,
                                     shuffle=False)
     LABEL2CLASSES = {v:k for k, v in CLASSES.items()}
+    ids_file = os.path.join(args.data_root, 'ImageSets', 'val.txt')
+    with open(ids_file, 'r') as f:
+        ids = [id.strip() for id in f.readlines()]
 
     if not args.no_cuda:
         model = PointPillars(nclasses=args.nclasses).cuda()
@@ -347,15 +354,15 @@ def main(args):
                 #r0_rect = calib_info['R0_rect'].astype(np.float32)
                 #P2 = calib_info['P2'].astype(np.float32)
                 #image_shape = data_dict['batched_img_info'][j]['image_shape']
-                #idx = data_dict['batched_img_info'][j]['image_idx']
+                #idx = data_dict['batched_pts'][j]['image_idx']
                 #result_filter = keep_bbox_from_image_range(result, tr_velo_to_cam, r0_rect, P2, image_shape)
                 result_filter = keep_bbox_from_lidar_range_v2(result, pcd_limit_range)
 
                 lidar_bboxes = result_filter['lidar_bboxes']
                 labels, scores = result_filter['labels'], result_filter['scores']
-                bboxes2d, camera_bboxes = result_filter['bboxes2d'], result_filter['camera_bboxes']
-                for lidar_bbox, label, score, bbox2d, camera_bbox in \
-                    zip(lidar_bboxes, labels, scores, bboxes2d, camera_bboxes):
+                #bboxes2d, camera_bboxes = result_filter['bboxes2d'], result_filter['camera_bboxes']
+                for lidar_bbox, label, score, in \
+                    zip(lidar_bboxes, labels, scores, ):            #bbox2d, camera_bbox in \   #bboxes2d, camera_bboxes):
                     format_result['name'].append(LABEL2CLASSES[label])
                     #format_result['truncated'].append(0.0)
                     #format_result['occluded'].append(0)
@@ -367,6 +374,7 @@ def main(args):
                     format_result['rotation_y'].append(lidar_bbox[6])       #camera_bbox
                     format_result['score'].append(score)
                 
+                idx = int(ids[j])
                 write_label_filtered(format_result, os.path.join(saved_submit_path, f'{idx:06d}.txt'))      #write_label
 
                 format_results[idx] = {k:np.array(v) for k, v in format_result.items()}

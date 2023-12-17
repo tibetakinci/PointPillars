@@ -108,7 +108,7 @@ class PillarEncoder(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2, 2]): #layer_strides=[2, 2, 2]
+    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]): #layer_strides=[2, 2, 2]
         super().__init__()
         assert len(out_channels) == len(layer_nums)
         assert len(out_channels) == len(layer_strides)
@@ -235,18 +235,19 @@ class PointPillars(nn.Module):
                                             in_channel=9, 
                                             out_channel=64)
         self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 256, 512],                  #out_channels=[64, 128, 256]
-                                 layer_nums=[3, 5, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 256, 512],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 4, 8],                             #upsample_strides=[1, 2, 4]
-                         out_channels=[128, 128, 128, 128])                         #out_channels=[128, 128, 128]
-        self.head = Head(in_channel=512, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
+                                 out_channels=[64, 128, 256],                  #out_channels=[64, 128, 256]
+                                 layer_nums=[3, 5, 5])                           #layer_nums=[3, 5, 5]
+        self.neck = Neck(in_channels=[64, 128, 256],                           #in_channels=[64, 128, 256]
+                         upsample_strides=[1, 2, 4],                             #upsample_strides=[1, 2, 4]
+                         out_channels=[128, 128, 128])                         #out_channels=[128, 128, 128]
+        self.head = Head(in_channel=384, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
         
         # anchors
         ranges = [[0, -39.68, -0.6, 69.12, 39.68, -0.6],
                     [0, -39.68, -0.6, 69.12, 39.68, -0.6],
                     [0, -39.68, -1.78, 69.12, 39.68, -1.78],
-                    [0, -39.68, -1.78, 69.12, 39.68, -0.6]]
+                    [0, -39.68, -1.78, 69.12, 39.68, -0.6]
+        ]
         sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.8, 1.08]]
         rotations=[0, 1.57]
         self.anchors_generator = Anchors(ranges=ranges, 
@@ -264,7 +265,7 @@ class PointPillars(nn.Module):
         # val and test
         self.nms_pre = 100
         self.nms_thr = 0.01
-        self.score_thr = 0.1
+        self.score_thr = 0.001      #self.score_thr = 0.1
         self.max_num = 50
 
     def get_predicted_bboxes_single(self, bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchors):
@@ -310,6 +311,7 @@ class PointPillars(nn.Module):
             cur_bbox_cls_pred = bbox_cls_pred[:, i]
             score_inds = cur_bbox_cls_pred > self.score_thr
             if score_inds.sum() == 0:
+                #print('CONTINUE')
                 continue
 
             cur_bbox_cls_pred = cur_bbox_cls_pred[score_inds]
@@ -336,7 +338,6 @@ class PointPillars(nn.Module):
 
         # 4. filter some bboxes if bboxes number is above self.max_num
         if len(ret_bboxes) == 0:
-            #print('EMPTY BBOX')
             return [], [], []
         ret_bboxes = torch.cat(ret_bboxes, 0)
         ret_labels = torch.cat(ret_labels, 0)
@@ -414,15 +415,6 @@ class PointPillars(nn.Module):
             
             return bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict
         elif mode == 'val':
-            ########### CHECK HERE
-            print('bbox_cls_pred')
-            print(bbox_cls_pred)
-            print('bbox_pred')
-            print(bbox_pred)
-            print('bbox_dir_cls_pred')
-            print(bbox_dir_cls_pred)
-            print('batched_anchors')
-            print(batched_anchors)
             results = self.get_predicted_bboxes(bbox_cls_pred=bbox_cls_pred, 
                                                 bbox_pred=bbox_pred, 
                                                 bbox_dir_cls_pred=bbox_dir_cls_pred, 

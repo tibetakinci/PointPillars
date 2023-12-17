@@ -88,6 +88,10 @@ def main(args):
         image_shape = img.shape[:2]
         result_filter = keep_bbox_from_image_range(result_filter, tr_velo_to_cam, r0_rect, P2, image_shape)
     '''
+    print('result_filter')
+    print(result_filter)
+    print(len(result_filter))
+    #print(result_filter[0].shape)
 
     result_filter = keep_bbox_from_lidar_range_v2(result_filter, pcd_limit_range)
     lidar_bboxes = result_filter['lidar_bboxes']
