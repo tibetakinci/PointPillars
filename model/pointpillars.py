@@ -336,7 +336,7 @@ class PointPillars(nn.Module):
 
         # 4. filter some bboxes if bboxes number is above self.max_num
         if len(ret_bboxes) == 0:
-            print('EMPTY BBOX')
+            #print('EMPTY BBOX')
             return [], [], []
         ret_bboxes = torch.cat(ret_bboxes, 0)
         ret_labels = torch.cat(ret_labels, 0)
@@ -415,6 +415,14 @@ class PointPillars(nn.Module):
             return bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict
         elif mode == 'val':
             ########### CHECK HERE
+            print('bbox_cls_pred')
+            print(bbox_cls_pred)
+            print('bbox_pred')
+            print(bbox_pred)
+            print('bbox_dir_cls_pred')
+            print(bbox_dir_cls_pred)
+            print('batched_anchors')
+            print(batched_anchors)
             results = self.get_predicted_bboxes(bbox_cls_pred=bbox_cls_pred, 
                                                 bbox_pred=bbox_pred, 
                                                 bbox_dir_cls_pred=bbox_dir_cls_pred, 

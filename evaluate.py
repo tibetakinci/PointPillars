@@ -304,7 +304,6 @@ def main(args):
         model = PointPillars(nclasses=args.nclasses)
         model.load_state_dict(
             torch.load(args.ckpt, map_location=torch.device('cpu')))
-    print(model.state_dict())
     
     saved_path = args.saved_path
     os.makedirs(saved_path, exist_ok=True)
