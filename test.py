@@ -58,19 +58,17 @@ def main(args):
         calib_info = read_calib(args.calib_path)
     else:
         calib_info = None
+        
+    if os.path.exists(args.img_path):
+        img = cv2.imread(args.img_path, 1)
+    else:
+        img = None
     '''
     
     if os.path.exists(args.gt_path):
         gt_label = read_label(args.gt_path)
     else:
         gt_label = None
-
-    '''
-    if os.path.exists(args.img_path):
-        img = cv2.imread(args.img_path, 1)
-    else:
-        img = None
-    '''
 
     model.eval()
     with torch.no_grad():
@@ -88,10 +86,6 @@ def main(args):
         image_shape = img.shape[:2]
         result_filter = keep_bbox_from_image_range(result_filter, tr_velo_to_cam, r0_rect, P2, image_shape)
     '''
-    print('result_filter')
-    print(result_filter)
-    print(len(result_filter))
-    #print(result_filter[0].shape)
 
     result_filter = keep_bbox_from_lidar_range_v2(result_filter, pcd_limit_range)
     lidar_bboxes = result_filter['lidar_bboxes']

@@ -156,3 +156,20 @@ def write_label_filtered(result, file_path, suffix='.txt'):
             xyz = ' '.join(map(str, location[i]))
             line = f'{name[i]} {hwl} {xyz} {rotation_y[i]}\n'
             f.writelines(line)
+
+
+def write_label_filtered_with_score(result, file_path, suffix='.txt'):
+    '''
+    result: dict,
+    file_path: str
+    '''
+    assert os.path.splitext(file_path)[1] == suffix
+    name, dimensions, location, rotation_y, score = \
+        result['name'], result['dimensions'], result['location'], result['rotation_y'], result['score']
+
+    with open(file_path, 'w') as f:
+        for i in range(len(name)):
+            hwl = ' '.join(map(str, dimensions[i]))
+            xyz = ' '.join(map(str, location[i]))
+            line = f'{name[i]} {hwl} {xyz} {rotation_y[i]} {score[i]}\n'
+            f.writelines(line)
