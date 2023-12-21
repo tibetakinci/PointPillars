@@ -40,7 +40,6 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
     gt_results: dict(id -> det_results)
     CLASSES: dict
     '''
-    return
     assert len(det_results) == len(gt_results)
     f = open(os.path.join(saved_path, 'eval_results.txt'), 'w')
 
@@ -55,11 +54,13 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
         gt_result = gt_results[id]['annos']
         det_result = det_results[id]
 
+        '''
         # 1.1, 2d bboxes iou
-        #gt_bboxes2d = gt_result['bbox'].astype(np.float32)
-        #det_bboxes2d = det_result['bbox'].astype(np.float32)
-        #iou2d_v = iou2d(torch.from_numpy(gt_bboxes2d).cuda(), torch.from_numpy(det_bboxes2d).cuda())
-        #ious['bbox_2d'].append(iou2d_v.cpu().numpy())
+        gt_bboxes2d = gt_result['bbox'].astype(np.float32)
+        det_bboxes2d = det_result['bbox'].astype(np.float32)
+        iou2d_v = iou2d(torch.from_numpy(gt_bboxes2d).cuda(), torch.from_numpy(det_bboxes2d).cuda())
+        ious['bbox_2d'].append(iou2d_v.cpu().numpy())
+        '''
 
         # 1.2, bev iou
         gt_location = gt_result['location'].astype(np.float32)
@@ -69,10 +70,12 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
         det_dimensions = det_result['dimensions'].astype(np.float32)
         det_rotation_y = det_result['rotation_y'].astype(np.float32)
 
+        
         gt_bev = np.concatenate([gt_location[:, [0, 2]], gt_dimensions[:, [0, 2]], gt_rotation_y[:, None]], axis=-1)
         det_bev = np.concatenate([det_location[:, [0, 2]], det_dimensions[:, [0, 2]], det_rotation_y[:, None]], axis=-1)
         iou_bev_v = iou_bev(torch.from_numpy(gt_bev).cuda(), torch.from_numpy(det_bev).cuda())
         ious['bbox_bev'].append(iou_bev_v.cpu().numpy())
+
 
         # 1.3, 3dbboxes iou
         gt_bboxes3d = np.concatenate([gt_location, gt_dimensions, gt_rotation_y[:, None]], axis=-1)
@@ -81,15 +84,15 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
         ious['bbox_3d'].append(iou3d_v.cpu().numpy())
 
     MIN_IOUS = {
-        'Pedestrian': [0.5, 0.5, 0.5],
-        'Cyclist': [0.5, 0.5, 0.5],
-        'Car': [0.7, 0.7, 0.7],
-        'Wheelchair': [0.5, 0.5, 0.5]
+        'Pedestrian': [0.5, 0.5],
+        'Cyclist': [0.1, 0.1],
+        'Car': [0.7, 0.7],
+        'Wheelchair': [0.3, 0.3]
     }
-    MIN_HEIGHT = [40, 25, 25, 10]
+    #MIN_HEIGHT = [40, 25, 25, 10]
 
     overall_results = {}
-    for e_ind, eval_type in enumerate(['bbox_bev', 'bbox_3d']): #'bbox_2d'
+    for e_ind, eval_type in enumerate(['bbox_bev', 'bbox_3d']):                         #'bbox_2d'
         eval_ious = ious[eval_type]
         eval_ap_results, eval_aos_results = {}, {}
         for cls in CLASSES:
@@ -98,8 +101,8 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
             CLS_MIN_IOU = MIN_IOUS[cls][e_ind]
             #for difficulty in [0, 1, 2, 3]:
             # 1. bbox property
-            total_gt_ignores, total_det_ignores, total_dc_bboxes, total_scores = [], [], [], []
-            total_gt_alpha, total_det_alpha = [], []
+            total_gt_ignores, total_det_ignores, total_scores = [], [], []              #total_dc_bboxes = []
+            #total_gt_alpha, total_det_alpha = [], []
             for id in ids:
                 gt_result = gt_results[id]['annos']
                 det_result = det_results[id]
@@ -111,23 +114,29 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                 for j, cur_gt_name in enumerate(cur_gt_names):
                     #ignore = cur_difficulty[j] < 0 or cur_difficulty[j] > difficulty
                     if cur_gt_name == cls:
-                        valid_class = 1
-                    elif cls == 'Pedestrian' and cur_gt_name == 'Person_sitting':
-                        valid_class = 0
-                    elif cls == 'Car' and cur_gt_name == 'Van':
-                        valid_class = 0
-                    else:
-                        valid_class = -1
-                    
-                    if valid_class == 1:                                #and not ignore:
+                        #valid_class = 1
                         gt_ignores.append(0)
-                    elif valid_class == 0 or valid_class == 1:          #(valid_class == 1 and ignore):
+                    elif cls == 'Pedestrian' and cur_gt_name == 'Person_sitting':
+                        #valid_class = 0
+                        gt_ignores.append(1)
+                    elif cls == 'Car' and cur_gt_name == 'Van':
+                        #valid_class = 0
+                        gt_ignores.append(1)
+                    else:
+                        #valid_class = -1
+                        gt_ignores.append(-1)
+                    
+                    '''
+                    if valid_class == 1:                                        #and not ignore:
+                        gt_ignores.append(0)
+                    elif valid_class == 0 or valid_class == 1:                  #(valid_class == 1 and ignore):
                         gt_ignores.append(1)
                     else:
                         gt_ignores.append(-1)
                     
-                    #if cur_gt_name == 'DontCare':
-                        #dc_bboxes.append(gt_result['bbox'][j])
+                    if cur_gt_name == 'DontCare':
+                        dc_bboxes.append(gt_result['bbox'][j])
+                    '''
                 total_gt_ignores.append(gt_ignores)
                 #total_dc_bboxes.append(np.array(dc_bboxes))
                 #total_gt_alpha.append(gt_result['alpha'])
@@ -139,10 +148,10 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                 for j, cur_det_name in enumerate(cur_det_names):
                     #if cur_det_heights[j] < MIN_HEIGHT[difficulty]:
                         #det_ignores.append(1)
-                    if cur_det_name == cls:                 #elif
+                    if cur_det_name == cls:                                     #elif
                         det_ignores.append(0)
                     else:
-                        det_ignores.append(-1)
+                        det_ignores.append(1)                                   #-1
                 total_det_ignores.append(det_ignores)
                 total_scores.append(det_result['score'])
                 #total_det_alpha.append(det_result['alpha'])
@@ -166,10 +175,15 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                             match_score = scores[k]
                     if match_id != -1:
                         assigned[match_id] = True
-                        if det_ignores[match_id] == 0 and gt_ignores[j] == 0:
-                            tp_scores.append(match_score)
+                        #if det_ignores[match_id] == 0 and gt_ignores[j] == 0:
+                        tp_scores.append(match_score)
+            
+            print('scores')                         #TODO
+            print(tp_scores)
             total_num_valid_gt = np.sum([np.sum(np.array(gt_ignores) == 0) for gt_ignores in total_gt_ignores])
-            score_thresholds = get_score_thresholds(tp_scores, total_num_valid_gt)    
+            score_thresholds = get_score_thresholds(tp_scores, total_num_valid_gt)
+            print('score_threshold')
+            print(score_thresholds)
         
             # 3. draw PR curve and calculate mAP
             tps, fns, fps, total_aos = [], [], [], []
@@ -191,7 +205,6 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                         match_id, match_iou = -1, -1
                         for k in range(mm):
                             if not assigned[k] and det_ignores[k] >= 0 and scores[k] >= score_threshold and cur_eval_ious[j, k] > CLS_MIN_IOU:
-
                                 if det_ignores[k] == 0 and cur_eval_ious[j, k] > match_iou:
                                     match_iou = cur_eval_ious[j, k]
                                     match_id = k
@@ -244,6 +257,7 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                 sums_AP += precisions[i]
             mAP = sums_AP / 11 * 100
             eval_ap_results[cls].append(mAP)
+            print('results')
 
             '''
             if eval_type == 'bbox_2d':
@@ -261,8 +275,8 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
         print(f'=========={eval_type.upper()}==========')
         print(f'=========={eval_type.upper()}==========', file=f)
         for k, v in eval_ap_results.items():
-            print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}')
-            print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}', file=f)
+            print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f}')
+            print(f'{k} AP@{MIN_IOUS[k][e_ind]}: {v[0]:.4f}', file=f)
         '''
         if eval_type == 'bbox_2d':
             print(f'==========AOS==========')
@@ -278,8 +292,8 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
     print(f'\n==========Overall==========')
     print(f'\n==========Overall==========', file=f)
     for k, v in overall_results.items():
-        print(f'{k} AP: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}')
-        print(f'{k} AP: {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}', file=f)
+        print(f'{k} AP: {v[0]:.4f}')
+        print(f'{k} AP: {v[0]:.4f}', file=f)
     f.close()
     
 
@@ -379,7 +393,7 @@ def main(args):
                 idx = int(ids[index])
                 write_label_filtered_with_score(format_result, os.path.join(saved_submit_path, f'{idx:06d}.txt'))      #write_label
 
-                format_results[index] = {k:np.array(v) for k, v in format_result.items()}                   #idx
+                format_results[idx] = {k:np.array(v) for k, v in format_result.items()}
         
         write_pickle(format_results, os.path.join(saved_path, 'results.pkl'))
     
