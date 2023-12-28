@@ -219,9 +219,9 @@ class Head(nn.Module):
 
 class PointPillars(nn.Module):
     def __init__(self,
-                 nclasses=3, 
-                 voxel_size=[0.16, 0.16, 4],
-                 point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
+                 nclasses=4,
+                 voxel_size=[0.16, 0.16, 6],                                     #[0.16, 0.16, 4],
+                 point_cloud_range=[-1, -39.68, -3, 68.12, 39.68, 3],            #[0, -39.68, -3, 69.12, 39.68, 1],
                  max_num_points=32,
                  max_voxels=(16000, 40000)):
         super().__init__()
@@ -234,21 +234,21 @@ class PointPillars(nn.Module):
                                             point_cloud_range=point_cloud_range, 
                                             in_channel=9, 
                                             out_channel=64)
-        self.backbone = Backbone(in_channel=64, 
-                                 out_channels=[64, 128, 256],                  #out_channels=[64, 128, 256]
-                                 layer_nums=[3, 5, 5])                           #layer_nums=[3, 5, 5]
-        self.neck = Neck(in_channels=[64, 128, 256],                           #in_channels=[64, 128, 256]
-                         upsample_strides=[1, 2, 4],                             #upsample_strides=[1, 2, 4]
-                         out_channels=[128, 128, 128])                         #out_channels=[128, 128, 128]
-        self.head = Head(in_channel=384, n_anchors=2*nclasses, n_classes=nclasses)  #in_channel=384
+        self.backbone = Backbone(in_channel=64,
+                                 out_channels=[64, 128, 256],
+                                 layer_nums=[3, 5, 5])
+        self.neck = Neck(in_channels=[64, 128, 256],
+                         upsample_strides=[1, 2, 4],
+                         out_channels=[128, 128, 128])
+        self.head = Head(in_channel=384, n_anchors=2*nclasses, n_classes=nclasses)
         
         # anchors
-        ranges = [[0, -39.68, -0.6, 69.12, 39.68, -0.6],
-                    [0, -39.68, -0.6, 69.12, 39.68, -0.6],
-                    [0, -39.68, -1.78, 69.12, 39.68, -1.78],
-                    [0, -39.68, -1.78, 69.12, 39.68, -0.6]
-        ]
-        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.8, 1.08]]
+        ranges = [[0, -40, -0.6, 70, 40, -0.6],              #[0, -39.68, -0.6, 69.12, 39.68, -0.6],
+                    [0, -40, -0.6, 70, 40, -0.6],            #[0, -39.68, -0.6, 69.12, 39.68, -0.6],
+                    [0, -40, -1.78, 70, 40, -1.78],          #[0, -39.68, -1.78, 69.12, 39.68, -1.78],
+                    [-1.5, -40, -1, 70, 40, 3]               #[-1, -40, -3, 70.4, 40, 3]
+                ]
+        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.8, 1.23]]
         rotations=[0, 1.57]
         self.anchors_generator = Anchors(ranges=ranges, 
                                          sizes=sizes, 
@@ -264,8 +264,8 @@ class PointPillars(nn.Module):
 
         # val and test
         self.nms_pre = 100
-        self.nms_thr = 0.01
-        self.score_thr = 0.001      #self.score_thr = 0.1
+        self.nms_thr = 0.01            #0.01
+        self.score_thr = 0.1          #0.1
         self.max_num = 50
 
     def get_predicted_bboxes_single(self, bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchors):

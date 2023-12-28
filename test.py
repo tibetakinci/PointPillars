@@ -13,7 +13,7 @@ from model import PointPillars
 from dataset import Kitti, Custom
 
 
-def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
+def point_range_filter(pts, point_range=[-1, -40, -3, 70.4, 40, 3]):                        #[0, -39.68, -3, 69.12, 39.68, 1]
     '''
     data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
     point_range: [x1, y1, z1, x2, y2, z2]
@@ -38,7 +38,7 @@ def main(args):
         raise ValueError("Dataset name should be 'kitti' or 'custom'")
 
     LABEL2CLASSES = {v:k for k, v in CLASSES.items()}
-    pcd_limit_range = np.array([0, -40, -3, 70.4, 40, 0.0], dtype=np.float32)
+    pcd_limit_range = np.array([-1, -40, -3, 70.4, 40, 3], dtype=np.float32)                #[0, -40, -3, 70.4, 40, 0.0]
 
     if not args.no_cuda:
         model = PointPillars(nclasses=len(CLASSES)).cuda()

@@ -11,6 +11,23 @@ CUR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CUR))
 from utils import read_points, read_calib, read_label, bbox_camera2lidar, vis_pc, bbox3d2corners,\
      points_lidar2image, vis_img_3d, read_label_filtered
+from dataset import Custom
+
+
+def point_range_filter(pts, point_range=[-1, -40, -3, 70.4, 40, 3]):
+    '''
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    point_range: [x1, y1, z1, x2, y2, z2]
+    '''
+    flag_x_low = pts[:, 0] > point_range[0]
+    flag_y_low = pts[:, 1] > point_range[1]
+    flag_z_low = pts[:, 2] > point_range[2]
+    flag_x_high = pts[:, 0] < point_range[3]
+    flag_y_high = pts[:, 1] < point_range[4]
+    flag_z_high = pts[:, 2] < point_range[5]
+    keep_mask = flag_x_low & flag_y_low & flag_z_low & flag_x_high & flag_y_high & flag_z_high
+    pts = pts[keep_mask]
+    return pts 
 
 
 def vis_gt(root, id, saved_root): 
@@ -23,18 +40,12 @@ def vis_gt(root, id, saved_root):
     #img3d = copy.deepcopy(img)
     lidar_points = read_points(lidar_path)
     #calib_dict = read_calib(calib_path)
-    annotation_dict = read_label(label_path)
+    annotation_dict = read_label_filtered(label_path)
 
     #bboxes = annotation_dict['bbox']
     #names = annotation_dict['name']
     #colors = [[0, 0, 255], [0, 255, 0], [255, 0, 0], [255, 255, 0]]
-    CLASSES = {
-            'Pedestrian': 0, 
-            'Cyclist': 1, 
-            'Car': 2,
-            'Wheelchair': 3
-            }
-
+    CLASSES = Custom.CLASSES
 
     ## 1. visualize 2d
     '''
@@ -49,7 +60,6 @@ def vis_gt(root, id, saved_root):
 
     ## 2. visualize 3d bbox in point cloud
 
-    # 2.1 camera coordinates
     pi = 180
     dimensions = annotation_dict['dimensions']
     location = annotation_dict['location']
@@ -62,17 +72,17 @@ def vis_gt(root, id, saved_root):
         rotation_y = rotation_y % pi
     '''
 
-    # 2.2 lidar coordinates
-    bboxes_camera = np.concatenate([location, dimensions[:, [1, 2, 0]], rotation_y[:, None]], axis=-1) # (N, 7)
-    #print("camera")
-    #print(bboxes_camera[0])
+    bboxes_camera = np.concatenate([location, dimensions, rotation_y[:, None]], axis=-1) # (N, 7)       [:, [1, 2, 0]]
     #tr_velo_to_cam = calib_dict['Tr_velo_to_cam']
     #r0_rect = calib_dict['R0_rect']
     #bboxes_lidar = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
-    #print("lidar")
-    #print(bboxes_lidar[0])
     lidar_bboxes_points = bbox3d2corners(bboxes_camera) # (N, 8, 3)
     labels = [CLASSES.get(name, -1) for name in names]
+    print('before')
+    print(len(lidar_points))
+    lidar_points = point_range_filter(lidar_points)
+    print('after')
+    print(len(lidar_points))
     vis_pc(lidar_points, lidar_bboxes_points, labels) # (N, 8, 2)
 
     ## 3. visualize 3d bbox in image

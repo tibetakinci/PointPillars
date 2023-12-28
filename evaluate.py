@@ -85,9 +85,9 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
 
     MIN_IOUS = {
         'Pedestrian': [0.5, 0.5],
-        'Cyclist': [0.1, 0.1],
+        'Cyclist': [0.5, 0.5],
         'Car': [0.7, 0.7],
-        'Wheelchair': [0.3, 0.3]
+        'Wheelchair': [0.5, 0.5]
     }
     #MIN_HEIGHT = [40, 25, 25, 10]
 
@@ -175,22 +175,20 @@ def do_eval(det_results, gt_results, CLASSES, saved_path):
                             match_score = scores[k]
                     if match_id != -1:
                         assigned[match_id] = True
-                        #if det_ignores[match_id] == 0 and gt_ignores[j] == 0:
-                        tp_scores.append(match_score)
+                        if det_ignores[match_id] == 0 and gt_ignores[j] == 0:
+                            tp_scores.append(match_score)
             
             print('scores')                         #TODO
             print(tp_scores)
             total_num_valid_gt = np.sum([np.sum(np.array(gt_ignores) == 0) for gt_ignores in total_gt_ignores])
             score_thresholds = get_score_thresholds(tp_scores, total_num_valid_gt)
-            print('score_threshold')
-            print(score_thresholds)
         
             # 3. draw PR curve and calculate mAP
             tps, fns, fps, total_aos = [], [], [], []
 
             for score_threshold in score_thresholds:
                 tp, fn, fp = 0, 0, 0
-                aos = 0
+                #aos = 0
                 for i, id in enumerate(ids):
                     cur_eval_ious = eval_ious[i]
                     gt_ignores, det_ignores = total_gt_ignores[i], total_det_ignores[i]
@@ -332,7 +330,7 @@ def main(args):
     saved_submit_path = os.path.join(saved_path, 'submit')
     os.makedirs(saved_submit_path, exist_ok=True)
 
-    pcd_limit_range = np.array([0, -40, -3, 70.4, 40, 0.0], dtype=np.float32)
+    pcd_limit_range = np.array([-1, -40, -3, 70.4, 40, 3], dtype=np.float32)           #[0, -40, -3, 70.4, 40, 0.0]
     index = 0
 
     model.eval()
@@ -372,10 +370,10 @@ def main(args):
                 #image_shape = data_dict['batched_img_info'][j]['image_shape']
                 #idx = data_dict['batched_pts'][j]['image_idx']
                 #result_filter = keep_bbox_from_image_range(result, tr_velo_to_cam, r0_rect, P2, image_shape)
-                #result_filter = keep_bbox_from_lidar_range_v2(result, pcd_limit_range)
+                result_filter = keep_bbox_from_lidar_range_v2(result, pcd_limit_range)
 
-                lidar_bboxes = result['lidar_bboxes']                            #result_filter['lidar_bboxes']
-                labels, scores = result['labels'], result['scores']              #result_filter['labels'], result_filter['scores']
+                lidar_bboxes = result_filter['lidar_bboxes']                            #result_filter['lidar_bboxes']
+                labels, scores = result_filter['labels'], result_filter['scores']              #result_filter['labels'], result_filter['scores']
                 #bboxes2d, camera_bboxes = result_filter['bboxes2d'], result_filter['camera_bboxes']
                 for lidar_bbox, label, score in zip(lidar_bboxes, labels, scores):       #, bbox2d, camera_bbox in \   #, bboxes2d, camera_bboxes):
                     format_result['name'].append(LABEL2CLASSES[label])
