@@ -316,11 +316,10 @@ def main(args):
 
     if not args.no_cuda:
         model = PointPillars(nclasses=args.nclasses).cuda()
-        model.load_state_dict(torch.load(args.ckpt))
+        model.load_state_dict(torch.load(args.ckpt)['model_state_dict'])
     else:
         model = PointPillars(nclasses=args.nclasses)
-        model.load_state_dict(
-            torch.load(args.ckpt, map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load(args.ckpt, map_location=torch.device('cpu'))['model_state_dict'])
 
     #head_tail = os.path.split(args.ckpt)
 

@@ -45,15 +45,19 @@ def main(args):
                                     batch_size=args.batch_size,
                                     num_workers=args.num_workers,
                                     shuffle=False)
-
     if not args.no_cuda:
         pointpillars = PointPillars(nclasses=args.nclasses).cuda()
     else:
         pointpillars = PointPillars(nclasses=args.nclasses)
-    loss_func = Loss()
 
-    max_iters = len(train_dataloader) * args.max_epoch
+    cur_epoch = 0
+    if args.ckpt:
+        checkpoint = torch.load(args.ckpt)
+        cur_epoch = checkpoint['epoch']
+
+    max_iters = len(train_dataloader) * (args.max_epoch - cur_epoch)
     init_lr = args.init_lr
+    loss_func = Loss()
     optimizer = torch.optim.AdamW(params=pointpillars.parameters(),
                                   lr=init_lr,
                                   betas=(0.95, 0.99),
@@ -67,14 +71,22 @@ def main(args):
                                                     base_momentum=0.95 * 0.895,
                                                     max_momentum=0.95,
                                                     div_factor=10)
-    saved_path = os.path.join(args.saved_path,  str(datetime.datetime.now()))
+    saved_path = os.path.join(args.saved_path, str(datetime.datetime.now()))
     saved_logs_path = os.path.join(saved_path, 'summary')
     os.makedirs(saved_logs_path, exist_ok=True)
     writer = SummaryWriter(saved_logs_path)
     saved_ckpt_path = os.path.join(saved_path, 'checkpoints')
     os.makedirs(saved_ckpt_path, exist_ok=True)
 
-    for epoch in range(args.max_epoch):
+    if args.ckpt:
+        checkpoint = torch.load(args.ckpt)
+        pointpillars.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        loss_func.load_state_dict(checkpoint['loss_state_dict'])
+        pointpillars.train()
+
+    for epoch in range(cur_epoch, args.max_epoch):
         print('=' * 20, epoch, '=' * 20)
         train_step, val_step = 0, 0
         for i, data_dict in enumerate(tqdm(train_dataloader)):
@@ -144,7 +156,13 @@ def main(args):
                              momentum=optimizer.param_groups[0]['betas'][0])
             train_step += 1
         if (epoch + 1) % args.ckpt_freq_epoch == 0:
-            torch.save(pointpillars.state_dict(), os.path.join(saved_ckpt_path, f'epoch_{epoch + 1}.pth'))
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': pointpillars.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'loss_state_dict': loss_func.state_dict(),
+            }, os.path.join(saved_ckpt_path, f'epoch_{epoch + 1}.pth'))
 
         if epoch % 2 == 0:
             continue
@@ -221,6 +239,7 @@ if __name__ == '__main__':
     parser.add_argument('--log_freq', type=int, default=8)
     parser.add_argument('--ckpt_freq_epoch', type=int, default=20)
     parser.add_argument('--no_cuda', action='store_true', help='whether to use cuda')
+    parser.add_argument('--ckpt', help='root for checkpoint .pth file')
     args = parser.parse_args()
 
     main(args)

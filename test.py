@@ -42,11 +42,10 @@ def main(args):
 
     if not args.no_cuda:
         model = PointPillars(nclasses=len(CLASSES)).cuda()
-        model.load_state_dict(torch.load(args.ckpt))
+        model.load_state_dict(torch.load(args.ckpt)['model_state_dict'])
     else:
         model = PointPillars(nclasses=len(CLASSES))
-        model.load_state_dict(
-            torch.load(args.ckpt, map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load(args.ckpt, map_location=torch.device('cpu'))['model_state_dict'])
     
     if not os.path.exists(args.pc_path):
         raise FileNotFoundError 
