@@ -181,8 +181,8 @@ class Custom(Dataset):
                 scale_ratio_range=[0.95, 1.05],
                 translation_std=[0, 0, 0]
                 ), 
-            point_range_filter=[0, -39.68, -3, 69.12, 39.68, 1],
-            object_range_filter=[0, -39.68, -3, 69.12, 39.68, 1]             
+            point_range_filter=[-1, -39.68, -3, 68.12, 39.68, 3],           #[0, -39.68, -3, 69.12, 39.68, 1],
+            object_range_filter=[-1, -39.68, -3, 68.12, 39.68, 3],          #[0, -39.68, -3, 69.12, 39.68, 1]             
         )
 
     def filter_db(self, db_infos):
@@ -196,7 +196,7 @@ class Custom(Dataset):
     
     def __getitem__(self, index):
         data_info = self.data_infos[self.sorted_ids[index]]
-        #image_info, calib_info, annos_info = data_info['image'], data_info['calib'], data_info['annos']
+        #image_info, calib_info = data_info['image'], data_info['calib']
         annos_info = data_info['annos']
     
         # point cloud input
@@ -227,12 +227,11 @@ class Custom(Dataset):
             #'image_info': image_info,
             #'calib_info': calib_info
         }
-        '''
+
         if self.split in ['train', 'trainval']:
             data_dict = data_augment(self.CLASSES, self.data_root, data_dict, self.data_aug_config)
         else:
             data_dict = point_range_filter(data_dict, point_range=self.data_aug_config['point_range_filter'])
-        '''
 
         return data_dict
     

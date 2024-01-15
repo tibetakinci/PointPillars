@@ -11,17 +11,15 @@ def dbsample(CLASSES, data_root, data_dict, db_sampler, sample_groups):
     '''
     CLASSES: dict(Pedestrian=0, Cyclist=1, Car=2)
     data_root: str, data root
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     db_infos: dict(Pedestrian, Cyclist, Car, ...)
     return: data_dict
     '''
     pts, gt_bboxes_3d = data_dict['pts'], data_dict['gt_bboxes_3d']
     gt_labels, gt_names = data_dict['gt_labels'], data_dict['gt_names']
-    gt_difficulty = data_dict['difficulty']
-    image_info, calib_info = data_dict['image_info'], data_dict['calib_info']
 
     sampled_pts, sampled_names, sampled_labels = [], [], []
-    sampled_bboxes, sampled_difficulty = [], []
+    sampled_bboxes = []
 
     avoid_coll_boxes = copy.deepcopy(gt_bboxes_3d)
     for name, v in sample_groups.items():
@@ -54,7 +52,6 @@ def dbsample(CLASSES, data_root, data_dict, db_sampler, sample_groups):
                 sampled_labels.append(CLASSES[cur_sample['name']])
                 sampled_bboxes.append(cur_sample['box3d_lidar'])
                 tmp_bboxes.append(cur_sample['box3d_lidar'])
-                sampled_difficulty.append(cur_sample['difficulty'])
         if len(tmp_bboxes) == 0:
             tmp_bboxes = np.array(tmp_bboxes).reshape(-1, 7)
         else:
@@ -69,15 +66,11 @@ def dbsample(CLASSES, data_root, data_dict, db_sampler, sample_groups):
     gt_bboxes_3d = avoid_coll_boxes.astype(np.float32)
     gt_labels = np.concatenate([gt_labels, np.array(sampled_labels)], axis=0)
     gt_names = np.concatenate([gt_names, np.array(sampled_names)], axis=0)
-    difficulty = np.concatenate([gt_difficulty, np.array(sampled_difficulty)], axis=0)
     data_dict = {
             'pts': pts,
             'gt_bboxes_3d': gt_bboxes_3d,
             'gt_labels': gt_labels, 
-            'gt_names': gt_names,
-            'difficulty': difficulty,
-            'image_info': image_info,
-            'calib_info': calib_info
+            'gt_names': gt_names
         }
     return data_dict
 
@@ -145,7 +138,7 @@ def object_noise_core(pts, gt_bboxes_3d, bev_corners, trans_vec, rot_angle, rot_
 
 def object_noise(data_dict, num_try, translation_std, rot_range):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     num_try: int, 100
     translation_std: shape=[3, ]
     rot_range: shape=[2, ]
@@ -181,7 +174,7 @@ def object_noise(data_dict, num_try, translation_std, rot_range):
 
 def random_flip(data_dict, random_flip_ratio):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     random_flip_ratio: float, 0-1
     return: data_dict
     '''
@@ -198,7 +191,7 @@ def random_flip(data_dict, random_flip_ratio):
 
 def global_rot_scale_trans(data_dict, rot_range, scale_ratio_range, translation_std):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     rot_range: [a, b]
     scale_ratio_range: [c, d] 
     translation_std:  [e, f, g]
@@ -234,7 +227,7 @@ def global_rot_scale_trans(data_dict, rot_range, scale_ratio_range, translation_
 
 def point_range_filter(data_dict, point_range):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     point_range: [x1, y1, z1, x2, y2, z2]
     '''
     pts = data_dict['pts']
@@ -252,11 +245,11 @@ def point_range_filter(data_dict, point_range):
 
 def object_range_filter(data_dict, object_range):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     point_range: [x1, y1, z1, x2, y2, z2]
     '''
     gt_bboxes_3d, gt_labels = data_dict['gt_bboxes_3d'], data_dict['gt_labels']
-    gt_names, difficulty = data_dict['gt_names'], data_dict['difficulty']
+    gt_names = data_dict['gt_names']
 
     # bev filter
     flag_x_low = gt_bboxes_3d[:, 0] > object_range[0]
@@ -266,18 +259,17 @@ def object_range_filter(data_dict, object_range):
     keep_mask = flag_x_low & flag_y_low & flag_x_high & flag_y_high
 
     gt_bboxes_3d, gt_labels = gt_bboxes_3d[keep_mask], gt_labels[keep_mask]
-    gt_names, difficulty = gt_names[keep_mask], difficulty[keep_mask]
+    gt_names = gt_names[keep_mask]
     gt_bboxes_3d[:, 6] = limit_period(gt_bboxes_3d[:, 6], 0.5, 2 * np.pi)
     data_dict.update({'gt_bboxes_3d': gt_bboxes_3d})
     data_dict.update({'gt_labels': gt_labels})
     data_dict.update({'gt_names': gt_names})
-    data_dict.update({'difficulty': difficulty})
     return data_dict
 
 
 def points_shuffle(data_dict):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     '''
     pts = data_dict['pts']
     indices = np.arange(0, len(pts))
@@ -289,20 +281,18 @@ def points_shuffle(data_dict):
 
 def filter_bboxes_with_labels(data_dict, label=-1):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     label: int
     '''
     gt_bboxes_3d, gt_labels = data_dict['gt_bboxes_3d'], data_dict['gt_labels']
-    gt_names, difficulty = data_dict['gt_names'], data_dict['difficulty']
+    gt_names = data_dict['gt_names']
     idx = gt_labels != label
     gt_bboxes_3d = gt_bboxes_3d[idx]
     gt_labels = gt_labels[idx]
     gt_names = gt_names[idx]
-    difficulty = difficulty[idx]
     data_dict.update({'gt_bboxes_3d': gt_bboxes_3d})
     data_dict.update({'gt_labels': gt_labels})
     data_dict.update({'gt_names': gt_names})
-    data_dict.update({'difficulty': difficulty})
     return data_dict
 
 
@@ -310,7 +300,7 @@ def data_augment(CLASSES, data_root, data_dict, data_aug_config):
     '''
     CLASSES: dict(Pedestrian=0, Cyclist=1, Car=2)
     data_root: str, data root
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names)
     data_aug_config: dict()
     return: data_dict
     '''

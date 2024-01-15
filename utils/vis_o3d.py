@@ -97,14 +97,43 @@ def vis_pc(pc, bboxes=None, labels=None):
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
 
-    ###For KITTI dataset
-    #lookat = [0, -0.4, -0.3]  # look_at target - center
-    #front = [-0.000001, 0, 0]  # camera position - eye
-    #up = [0, 0, 1]  # camera orientation - up
+    vis_core(vis_objs)
 
-    o3d.visualization.draw_plotly([ply for ply in vis_objs]) #, lookat=lookat, up=up, front=front
 
-    #vis_core(vis_objs)
+def vis_pc_plotly(pc, bboxes=None, labels=None):
+    '''
+    pc: ply or np.ndarray (N, 4)
+    bboxes: np.ndarray, (n, 7) or (n, 8, 3)
+    labels: (n, )
+    '''
+    if isinstance(pc, np.ndarray):
+        pc = npy2ply(pc)
+    
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+    size=40, origin=[0.0, 0.0, 40.0])
+
+    if bboxes is None:
+        print("BBOXES NONE")
+        o3d.visualization.draw_plotly([pc, mesh_frame])
+        return
+    
+    if len(bboxes.shape) == 2:
+        print("BBOXES.SHAPE == 2")
+        bboxes = bbox3d2corners(bboxes)
+    
+    vis_objs = [pc, mesh_frame]
+    for i in range(len(bboxes)):
+        bbox = bboxes[i]
+        if labels is None:
+            color = [1, 1, 0]
+        else:
+            if labels[i] >= 0 and labels[i] < 4:
+                color = COLORS[labels[i]]
+            else:
+                color = COLORS[-1]
+        vis_objs.append(bbox_obj(bbox, color=color))
+
+    o3d.visualization.draw_plotly([ply for ply in vis_objs])
 
 
 def vis_img_3d(img, image_points, labels, rt=True):

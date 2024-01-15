@@ -49,13 +49,8 @@ def main(args):
         pointpillars = PointPillars(nclasses=args.nclasses).cuda()
     else:
         pointpillars = PointPillars(nclasses=args.nclasses)
-
-    cur_epoch = 0
-    if args.ckpt:
-        checkpoint = torch.load(args.ckpt)
-        cur_epoch = checkpoint['epoch']
-
-    max_iters = len(train_dataloader) * (args.max_epoch - cur_epoch)
+        
+    max_iters = len(train_dataloader) * args.max_epoch
     init_lr = args.init_lr
     loss_func = Loss()
     optimizer = torch.optim.AdamW(params=pointpillars.parameters(),
@@ -78,12 +73,14 @@ def main(args):
     saved_ckpt_path = os.path.join(saved_path, 'checkpoints')
     os.makedirs(saved_ckpt_path, exist_ok=True)
 
+    cur_epoch = 0
     if args.ckpt:
+        print('Loading from pretrained model')
         checkpoint = torch.load(args.ckpt)
         pointpillars.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        loss_func.load_state_dict(checkpoint['loss_state_dict'])
+        cur_epoch = checkpoint['epoch']
         pointpillars.train()
 
     for epoch in range(cur_epoch, args.max_epoch):
@@ -102,7 +99,6 @@ def main(args):
             batched_pts = data_dict['batched_pts']
             batched_gt_bboxes = data_dict['batched_gt_bboxes']
             batched_labels = data_dict['batched_labels']
-            #batched_difficulty = data_dict['batched_difficulty']
             bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict = \
                 pointpillars(batched_pts=batched_pts,
                              mode='train',
@@ -116,14 +112,11 @@ def main(args):
             batched_bbox_labels = anchor_target_dict['batched_labels'].reshape(-1)
             batched_label_weights = anchor_target_dict['batched_label_weights'].reshape(-1)
             batched_bbox_reg = anchor_target_dict['batched_bbox_reg'].reshape(-1, 7)
-            # batched_bbox_reg_weights = anchor_target_dict['batched_bbox_reg_weights'].reshape(-1)
             batched_dir_labels = anchor_target_dict['batched_dir_labels'].reshape(-1)
-            # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
 
             pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
             bbox_pred = bbox_pred[pos_idx]
             batched_bbox_reg = batched_bbox_reg[pos_idx]
-            # sin(a - b) = sin(a)*cos(b) - cos(a)*sin(b)
             bbox_pred[:, -1] = torch.sin(bbox_pred[:, -1].clone()) * torch.cos(batched_bbox_reg[:, -1].clone())
             batched_bbox_reg[:, -1] = torch.cos(bbox_pred[:, -1].clone()) * torch.sin(batched_bbox_reg[:, -1].clone())
             bbox_dir_cls_pred = bbox_dir_cls_pred[pos_idx]
@@ -161,7 +154,6 @@ def main(args):
                 'model_state_dict': pointpillars.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
-                'loss_state_dict': loss_func.state_dict(),
             }, os.path.join(saved_ckpt_path, f'epoch_{epoch + 1}.pth'))
 
         if epoch % 2 == 0:
@@ -179,7 +171,6 @@ def main(args):
                 batched_pts = data_dict['batched_pts']
                 batched_gt_bboxes = data_dict['batched_gt_bboxes']
                 batched_labels = data_dict['batched_labels']
-                #batched_difficulty = data_dict['batched_difficulty']
                 bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict = \
                     pointpillars(batched_pts=batched_pts,
                                  mode='train',
@@ -193,14 +184,11 @@ def main(args):
                 batched_bbox_labels = anchor_target_dict['batched_labels'].reshape(-1)
                 batched_label_weights = anchor_target_dict['batched_label_weights'].reshape(-1)
                 batched_bbox_reg = anchor_target_dict['batched_bbox_reg'].reshape(-1, 7)
-                # batched_bbox_reg_weights = anchor_target_dict['batched_bbox_reg_weights'].reshape(-1)
                 batched_dir_labels = anchor_target_dict['batched_dir_labels'].reshape(-1)
-                # batched_dir_labels_weights = anchor_target_dict['batched_dir_labels_weights'].reshape(-1)
 
                 pos_idx = (batched_bbox_labels >= 0) & (batched_bbox_labels < args.nclasses)
                 bbox_pred = bbox_pred[pos_idx]
                 batched_bbox_reg = batched_bbox_reg[pos_idx]
-                # sin(a - b) = sin(a)*cos(b) - cos(a)*sin(b)
                 bbox_pred[:, -1] = torch.sin(bbox_pred[:, -1]) * torch.cos(batched_bbox_reg[:, -1])
                 batched_bbox_reg[:, -1] = torch.cos(bbox_pred[:, -1]) * torch.sin(batched_bbox_reg[:, -1])
                 bbox_dir_cls_pred = bbox_dir_cls_pred[pos_idx]
@@ -231,13 +219,13 @@ if __name__ == '__main__':
     parser.add_argument('--data_root', default='/mnt/ssd1/lifa_rdata/det/kitti', help='your data root for your dataset')
     parser.add_argument('--dataset_name', default='custom', help='your dataset name')
     parser.add_argument('--saved_path', default='pillar_logs')
-    parser.add_argument('--batch_size', type=int, default=6)
-    parser.add_argument('--num_workers', type=int, default=4)
+    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--nclasses', type=int, default=4)
-    parser.add_argument('--init_lr', type=float, default=0.00025)
-    parser.add_argument('--max_epoch', type=int, default=160)
+    parser.add_argument('--init_lr', type=float, default=0.001)       #0.00025
+    parser.add_argument('--max_epoch', type=int, default=100)
     parser.add_argument('--log_freq', type=int, default=8)
-    parser.add_argument('--ckpt_freq_epoch', type=int, default=20)
+    parser.add_argument('--ckpt_freq_epoch', type=int, default=2)
     parser.add_argument('--no_cuda', action='store_true', help='whether to use cuda')
     parser.add_argument('--ckpt', help='root for checkpoint .pth file')
     args = parser.parse_args()

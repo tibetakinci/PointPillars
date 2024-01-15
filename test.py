@@ -8,14 +8,14 @@ import pdb
 from utils import setup_seed, read_points, read_calib, read_label, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, vis_pc, \
     vis_img_3d, bbox3d2corners_camera, points_camera2image, \
-    bbox_camera2lidar, keep_bbox_from_lidar_range_v2
+    bbox_camera2lidar, keep_bbox_from_lidar_range_v2, vis_pc_plotly
 from model import PointPillars
 from dataset import Kitti, Custom
 
 
-def point_range_filter(pts, point_range=[-1, -40, -3, 70.4, 40, 3]):                        #[0, -39.68, -3, 69.12, 39.68, 1]
+def point_range_filter(pts, point_range=[-1, -40, -3, 70.4, 40, 3]):
     '''
-    data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
+    pts: [points]
     point_range: [x1, y1, z1, x2, y2, z2]
     '''
     flag_x_low = pts[:, 0] > point_range[0]
@@ -26,7 +26,7 @@ def point_range_filter(pts, point_range=[-1, -40, -3, 70.4, 40, 3]):            
     flag_z_high = pts[:, 2] < point_range[5]
     keep_mask = flag_x_low & flag_y_low & flag_z_low & flag_x_high & flag_y_high & flag_z_high
     pts = pts[keep_mask]
-    return pts 
+    return pts
 
 
 def main(args):
@@ -52,17 +52,6 @@ def main(args):
     pc = read_points(args.pc_path)
     pc = point_range_filter(pc)
     pc_torch = torch.from_numpy(pc)
-    '''
-    if os.path.exists(args.calib_path):
-        calib_info = read_calib(args.calib_path)
-    else:
-        calib_info = None
-        
-    if os.path.exists(args.img_path):
-        img = cv2.imread(args.img_path, 1)
-    else:
-        img = None
-    '''
     
     if os.path.exists(args.gt_path):
         gt_label = read_label(args.gt_path)
@@ -76,34 +65,15 @@ def main(args):
         
         result_filter = model(batched_pts=[pc_torch], 
                               mode='test')[0]
-    '''
-    if calib_info is not None and img is not None:
-        tr_velo_to_cam = calib_info['Tr_velo_to_cam'].astype(np.float32)
-        r0_rect = calib_info['R0_rect'].astype(np.float32)
-        P2 = calib_info['P2'].astype(np.float32)
-
-        image_shape = img.shape[:2]
-        result_filter = keep_bbox_from_image_range(result_filter, tr_velo_to_cam, r0_rect, P2, image_shape)
-    '''
 
     result_filter = keep_bbox_from_lidar_range_v2(result_filter, pcd_limit_range)
     lidar_bboxes = result_filter['lidar_bboxes']
     labels, scores = result_filter['labels'], result_filter['scores']
 
-    vis_pc(pc, bboxes=lidar_bboxes, labels=labels)
-
-    '''
-    if calib_info is not None and img is not None:
-        bboxes2d, camera_bboxes = result_filter['bboxes2d'], result_filter['camera_bboxes'] 
-        bboxes_corners = bbox3d2corners_camera(camera_bboxes)
-        image_points = points_camera2image(bboxes_corners, P2)
-        img = vis_img_3d(img, image_points, labels, rt=True)
-    '''
+    #vis_pc(pc, bboxes=lidar_bboxes, labels=labels)
+    vis_pc_plotly(pc, bboxes=lidar_bboxes, labels=labels)
 
     if gt_label is not None:
-        #tr_velo_to_cam = calib_info['Tr_velo_to_cam'].astype(np.float32)
-        #r0_rect = calib_info['R0_rect'].astype(np.float32)
-
         dimensions = gt_label['dimensions']
         location = gt_label['location']
         rotation_y = gt_label['rotation_y']
@@ -111,40 +81,23 @@ def main(args):
         sel = gt_labels != -1
         gt_labels = gt_labels[sel]
         bboxes_lidar = np.concatenate([location, dimensions, rotation_y[:, None]], axis=-1)
-        #gt_lidar_bboxes = bbox_camera2lidar(bboxes_camera, tr_velo_to_cam, r0_rect)
-        #gt_lidar_bboxes = gt_lidar_bboxes[sel]
         bboxes_lidar = bboxes_lidar[sel]
 
         gt_labels = [-1] * len(gt_label['name']) # to distinguish between the ground truth and the predictions
         
         pred_gt_lidar_bboxes = np.concatenate([lidar_bboxes, bboxes_lidar], axis=0)
         pred_gt_labels = np.concatenate([labels, gt_labels])
-        vis_pc(pc, pred_gt_lidar_bboxes, labels=pred_gt_labels)
+        #vis_pc(pc, pred_gt_lidar_bboxes, labels=pred_gt_labels)
+        vis_pc_plotly(pc, pred_gt_lidar_bboxes, labels=pred_gt_labels)
 
-        '''
-        if img is not None:
-            bboxes_corners = bbox3d2corners_camera(bboxes_camera)
-            image_points = points_camera2image(bboxes_corners, P2)
-            gt_labels = [-1] * len(gt_label['name'])
-            img = vis_img_3d(img, image_points, gt_labels, rt=True)
-    
-    if calib_info is not None and img is not None:
-        cv2.imshow(f'{os.path.basename(args.img_path)}-3d bbox', img)
-        cv2.waitKey(0)
-    '''
-    
-            
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configuration Parameters')
     parser.add_argument('--ckpt', default='pretrained/epoch_160.pth', help='your checkpoint for kitti')
     parser.add_argument('--dataset_name', default='custom', help='your dataset name')
     parser.add_argument('--pc_path', default='', help='your point cloud path')
-    #parser.add_argument('--calib_path', default='', help='your calib file path')
     parser.add_argument('--gt_path', default='', help='your ground truth path')
-    #parser.add_argument('--img_path', default='', help='your image path')
-    parser.add_argument('--no_cuda', action='store_true',
-                        help='whether to use cuda')
+    parser.add_argument('--no_cuda', action='store_true', help='whether to use cuda')
     args = parser.parse_args()
 
     main(args)

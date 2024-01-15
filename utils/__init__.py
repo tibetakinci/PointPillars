@@ -8,4 +8,4 @@ from .process import bbox_camera2lidar, bbox3d2bevcorners, box_collision_test, \
     get_points_num_in_bbox, iou2d_nearest, iou2d, iou3d, iou3d_camera, iou_bev, \
     bbox3d2corners_camera, points_camera2image, points_in_bboxes_v3, get_points_num_in_bbox_v2, \
     keep_bbox_from_lidar_range_v2
-from .vis_o3d import vis_pc, vis_img_3d
+from .vis_o3d import vis_pc, vis_img_3d, vis_pc_plotly

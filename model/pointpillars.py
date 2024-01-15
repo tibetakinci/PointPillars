@@ -108,7 +108,7 @@ class PillarEncoder(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]): #layer_strides=[2, 2, 2]
+    def __init__(self, in_channel, out_channels, layer_nums, layer_strides=[2, 2, 2]):
         super().__init__()
         assert len(out_channels) == len(layer_nums)
         assert len(out_channels) == len(layer_strides)
@@ -248,7 +248,7 @@ class PointPillars(nn.Module):
                     [0, -40, -1.78, 70, 40, -1.78],          #[0, -39.68, -1.78, 69.12, 39.68, -1.78],
                     [-1.5, -40, -1, 70, 40, 3]               #[-1, -40, -3, 70.4, 40, 3]
                 ]
-        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.8, 1.23]]
+        sizes = [[0.6, 0.8, 1.73], [0.6, 1.76, 1.73], [1.6, 3.9, 1.56], [0.6, 0.9, 1.23]]
         rotations=[0, 1.57]
         self.anchors_generator = Anchors(ranges=ranges, 
                                          sizes=sizes, 
@@ -264,9 +264,9 @@ class PointPillars(nn.Module):
 
         # val and test
         self.nms_pre = 100
-        self.nms_thr = 0.01            #0.01
-        self.score_thr = 0.1          #0.1
-        self.max_num = 50
+        self.nms_thr = 0.01
+        self.score_thr = 0.1                  #score threshold: if too high and model can't predict, error might be thrown in evaluation. Prev value: 0.1, 0.005
+        self.max_num = 10
 
     def get_predicted_bboxes_single(self, bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchors):
         '''
@@ -311,7 +311,6 @@ class PointPillars(nn.Module):
             cur_bbox_cls_pred = bbox_cls_pred[:, i]
             score_inds = cur_bbox_cls_pred > self.score_thr
             if score_inds.sum() == 0:
-                #print('CONTINUE')
                 continue
 
             cur_bbox_cls_pred = cur_bbox_cls_pred[score_inds]
@@ -414,13 +413,7 @@ class PointPillars(nn.Module):
                                                nclasses=self.nclasses)
             
             return bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchor_target_dict
-        elif mode == 'val':
-            results = self.get_predicted_bboxes(bbox_cls_pred=bbox_cls_pred, 
-                                                bbox_pred=bbox_pred, 
-                                                bbox_dir_cls_pred=bbox_dir_cls_pred, 
-                                                batched_anchors=batched_anchors)
-            return results
-        elif mode == 'test':
+        elif mode == 'val' or mode == 'test':
             results = self.get_predicted_bboxes(bbox_cls_pred=bbox_cls_pred, 
                                                 bbox_pred=bbox_pred, 
                                                 bbox_dir_cls_pred=bbox_dir_cls_pred, 
