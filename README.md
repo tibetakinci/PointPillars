@@ -15,7 +15,7 @@ A slight modification is performed on top of the implementation to add a new cla
 - [Training](#training)
 - [Evaluation](#evaluation)
 - [Testing](#testing)
-- [Results](#results)
+- [Remarks](#remarks)
 
 ### Setup
 #### Cloning repository
@@ -84,7 +84,7 @@ python convert_kitti.py --label_root kitti_label_data_root --calib_root kitti_ca
 Please run the below code to pickle dataset objects for more efficient utilization by the model.
 ```
 cd PointPillars
-python pre_process_dataset.py --data_root your_path_to_kitti
+python pre_process_dataset.py --data_root your_path_to_dataset
 ```
 After running [pre_process_dataset.py](pre_process_dataset.py) script, dataset folder should look like this:
 ```
@@ -99,24 +99,43 @@ dataset_name
     └── velodyne (.bin)
 |── testing
     └── velodyne (.bin)
-|── kitti_gt_database (.bin)
-|── kitti_infos_train.pkl
-|── kitti_infos_val.pkl
-|── kitti_infos_test.pkl
-|── kitti_infos_trainval.pkl
-|── kitti_dbinfos_train.pkl
+|── {dataset_name}_gt_database (.bin)
+|── {dataset_name}_infos_train.pkl
+|── {dataset_name}_infos_val.pkl
+|── {dataset_name}_infos_test.pkl
+|── {dataset_name}_infos_trainval.pkl
+|── {dataset_name}_dbinfos_train.pkl
 ```
 #### Training 
 You can train the model by simply running below code
 ```
-python train.py --data_root your_path_to_kitti
+python train.py --data_root your_path_to_dataset
+```
+Or retrain a pretrained model by running below code
+```
+python train.py --data_root your_path_to_dataset --ckpt your_path_to_checkpoint_file
 ```
 
+> The list of arguments and explanations:  
+> *dataset_name:* Dataset name, set default to 'custom'  
+> *saved_path:* Root for output directory which includes checkpoint and summary files, set default to 'pillar_logs'  
+> *batch_size, num_workers, nclasses:* Model related params, type: int  
+> *init_lr, max_epochs, log_freq, ckpt_freq_epoch:* Training related params, type: int  
+> *no_cuda:* Whether to use CUDA or not on training
+ 
 #### Evaluation
 In order to retrieve the metrics of pretrained model evaluation is done by running:
 ```
-python evaluate.py --data_root your_path_to_kitti --ckpt your_path_to_pth_file
+python evaluate.py --data_root your_path_to_dataset --ckpt your_path_to_pth_file
 ```
+
+> Note: Once the model is not trained sufficiently, it will make predictions with less scores. Score threshold for evaluation is set to 0.1 at [pointpillars.py](model/pointpillars.py). If the evaluation script fails, please adjust the *self.score_thr* variable.
+
+> The list of arguments and explanations:  
+> *dataset_name:* Dataset name, set default to 'custom'  
+> *saved_path:* Root for output directory which includes checkpoint and summary files, set default to 'results'  
+> *batch_size, num_workers, nclasses:* Model related params, type: int  
+> *no_cuda:* Whether to use CUDA or not on training
 
 #### Testing
 To infer and visualize point cloud detection
@@ -126,8 +145,19 @@ python test.py --ckpt your_path_to_pth_file --pc_path your_pc_path
 
 To infer and visualize point cloud detection and ground truth.
 ```
-python test.py --ckpt your_path_to_pth_file --pc_path your_pc_path --calib_path your_calib_path  --gt_path your_gt_path
+python test.py --ckpt your_path_to_pth_file --pc_path your_pc_path --gt_path your_gt_path
 ```
 
-#### Results
-Results to be posted here soon...
+> The list of arguments and explanations:  
+> *dataset_name:* Dataset name, set default to 'custom'  
+> *no_cuda:* Whether to use CUDA or not on training
+
+### Remarks
+#### Pretrained models
+Pretrained models are located at [pretrained](pretrained/) directory at root. There are total of four subfolders including the previously trained model on KITTI dataset only. Summaries (loss functions, learning rate, momentum) can be visualized by running below code.
+‘’’
+tensorboard —logdir pretrained
+‘’’
+
+#### Issue with loss function
+Sometimes loss functions throws an error. That is because of the input of binary cross entropy at line 47 of [loss.py](loss/loss.py). The reason is that binary cross entropy should input values between [0, 1]. Sometimes the input can become NaN and both *sigmoid* and *one_hot* functions can’t convert. A resource I found online is [here](). One suggested solution; using operation *torch.clamp()*. Please keep in mind that this is a very rare error to produce. 

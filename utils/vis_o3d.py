@@ -110,7 +110,7 @@ def vis_pc_plotly(pc, bboxes=None, labels=None):
         pc = npy2ply(pc)
     
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-    size=40, origin=[0.0, 0.0, 40.0])
+    size=80, origin=[0.0, 0.0, 40.0])
 
     if bboxes is None:
         print("BBOXES NONE")
@@ -133,7 +133,7 @@ def vis_pc_plotly(pc, bboxes=None, labels=None):
                 color = COLORS[-1]
         vis_objs.append(bbox_obj(bbox, color=color))
 
-    o3d.visualization.draw_plotly([ply for ply in vis_objs])
+    o3d.visualization.draw_plotly([ply for ply in vis_objs], lookat=(-10,-20,0), front=(0,0,0.0045))
 
 
 def vis_img_3d(img, image_points, labels, rt=True):

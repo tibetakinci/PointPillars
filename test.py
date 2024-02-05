@@ -8,7 +8,8 @@ import pdb
 from utils import setup_seed, read_points, read_calib, read_label, \
     keep_bbox_from_image_range, keep_bbox_from_lidar_range, vis_pc, \
     vis_img_3d, bbox3d2corners_camera, points_camera2image, \
-    bbox_camera2lidar, keep_bbox_from_lidar_range_v2, vis_pc_plotly
+    bbox_camera2lidar, keep_bbox_from_lidar_range_v2, vis_pc_plotly, \
+    read_label_filtered
 from model import PointPillars
 from dataset import Kitti, Custom
 
@@ -54,7 +55,7 @@ def main(args):
     pc_torch = torch.from_numpy(pc)
     
     if os.path.exists(args.gt_path):
-        gt_label = read_label(args.gt_path)
+        gt_label = read_label_filtered(args.gt_path)
     else:
         gt_label = None
 
@@ -68,7 +69,7 @@ def main(args):
 
     result_filter = keep_bbox_from_lidar_range_v2(result_filter, pcd_limit_range)
     lidar_bboxes = result_filter['lidar_bboxes']
-    labels, scores = result_filter['labels'], result_filter['scores']
+    labels = result_filter['labels']
 
     #vis_pc(pc, bboxes=lidar_bboxes, labels=labels)
     vis_pc_plotly(pc, bboxes=lidar_bboxes, labels=labels)

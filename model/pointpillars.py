@@ -266,7 +266,7 @@ class PointPillars(nn.Module):
         self.nms_pre = 100
         self.nms_thr = 0.01
         self.score_thr = 0.1                  #score threshold: if too high and model can't predict, error might be thrown in evaluation. Prev value: 0.1, 0.005
-        self.max_num = 10
+        self.max_num = 1
 
     def get_predicted_bboxes_single(self, bbox_cls_pred, bbox_pred, bbox_dir_cls_pred, anchors):
         '''

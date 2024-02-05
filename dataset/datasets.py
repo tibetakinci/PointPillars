@@ -196,18 +196,12 @@ class Custom(Dataset):
     
     def __getitem__(self, index):
         data_info = self.data_infos[self.sorted_ids[index]]
-        #image_info, calib_info = data_info['image'], data_info['calib']
         annos_info = data_info['annos']
     
         # point cloud input
         velodyne_path = data_info['velodyne_path'].replace('velodyne', self.pts_prefix)
         pts_path = os.path.join(self.data_root, velodyne_path)
         pts = read_points(pts_path)
-        
-        # calib input: for bbox coordinates transformation between Camera and Lidar.
-        # because
-        #tr_velo_to_cam = calib_info['Tr_velo_to_cam'].astype(np.float32)
-        #r0_rect = calib_info['R0_rect'].astype(np.float32)
 
         # annotations input
         annos_info = self.remove_dont_care(annos_info)
@@ -216,16 +210,12 @@ class Custom(Dataset):
         annos_dimension = annos_info['dimensions']
         rotation_y = annos_info['rotation_y']
         gt_bboxes = np.concatenate([annos_location, annos_dimension, rotation_y[:, None]], axis=1).astype(np.float32)
-        #gt_bboxes_3d = bbox_camera2lidar(gt_bboxes, tr_velo_to_cam, r0_rect)
         gt_labels = [self.CLASSES.get(name, -1) for name in annos_name]
         data_dict = {
             'pts': pts,
             'gt_bboxes_3d': gt_bboxes,
             'gt_labels': np.array(gt_labels), 
-            'gt_names': annos_name,
-            #'difficulty': annos_info['difficulty'],
-            #'image_info': image_info,
-            #'calib_info': calib_info
+            'gt_names': annos_name
         }
 
         if self.split in ['train', 'trainval']:
