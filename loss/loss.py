@@ -39,23 +39,9 @@ class Loss(nn.Module):
         #             y == 1 -> p_t = p
         #             y == 0 -> p_t = 1 - p
         nclasses = bbox_cls_pred.size(1)
-        print('batched_labels before')
-        print(batched_labels.shape)
-        print(batched_labels.isnan().any())
-        batched_labels = F.one_hot(batched_labels, nclasses + 1)[:, :nclasses].float() # (n, 3)     torch.clamp(xxx, 0, 1)
-        print('batched_labels after')
-        print(batched_labels.shape)
-        print(batched_labels.isnan().any())
-        print(batched_labels.max(), batched_labels.min())
+        batched_labels = F.one_hot(batched_labels, nclasses + 1)[:, :nclasses].float() # (n, 3)     ISSUE: torch.clamp(xxx, 0, 1)
 
-        print('bbox_cls_pred')
-        print(bbox_cls_pred.shape)
-        print(bbox_cls_pred.isnan().any())
-        bbox_cls_pred_sigmoid = torch.sigmoid(bbox_cls_pred)                                       #torch.clamp(xxx, 0, 1)
-        print('bbox_cls_pred_sigmoid')
-        print(bbox_cls_pred_sigmoid.shape)
-        print(bbox_cls_pred_sigmoid.isnan().any())
-        print(bbox_cls_pred_sigmoid.max(), bbox_cls_pred_sigmoid.min())
+        bbox_cls_pred_sigmoid = torch.sigmoid(bbox_cls_pred)                                       #ISSUE: torch.clamp(xxx, 0, 1)
         weights = self.alpha * (1 - bbox_cls_pred_sigmoid).pow(self.gamma) * batched_labels + \
              (1 - self.alpha) * bbox_cls_pred_sigmoid.pow(self.gamma) * (1 - batched_labels) # (n, 3)
         cls_loss = F.binary_cross_entropy(bbox_cls_pred_sigmoid, batched_labels, reduction='none')
